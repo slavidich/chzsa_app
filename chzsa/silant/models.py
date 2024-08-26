@@ -3,14 +3,14 @@ from django.contrib.auth.models import User
 
 class Directory(models.Model): # Справочники
     class EntityType(models.TextChoices):
-        TECHNIQUE_MODEL = 'Модель техники'
-        ENGINE_MODEL = 'Модель двигателя'
-        TRANSMISSION_MODEL = 'Модель трансмиссии'
-        DRIVEN_AXLE_MODEL = 'Модель ведущего моста'
-        STEERED_AXLE_MODEL = 'Модель управляемого моста'
-        MAINTENANCE_TYPE = 'Вид ТО'
-        FAILURE_NODE = 'Узел отказа'
-        RECOVERY_METHOD = 'Способ восстановления'
+        TECHNIQUE_MODEL = 'TECHNIQUE_MODEL', 'Модель техники'
+        ENGINE_MODEL = 'ENGINE_MODEL', 'Модель двигателя'
+        TRANSMISSION_MODEL = 'TRANSMISSION_MODEL', 'Модель трансмиссии'
+        DRIVEN_AXLE_MODEL = 'DRIVEN_AXLE_MODEL', 'Модель ведущего моста'
+        STEERED_AXLE_MODEL = 'STEERED_AXLE_MODEL', 'Модель управляемого моста'
+        MAINTENANCE_TYPE = 'MAINTENANCE_TYPE', 'Вид ТО'
+        FAILURE_NODE = 'FAILURE_NODE', 'Узел отказа'
+        RECOVERY_METHOD = 'RECOVERY_METHOD', 'Способ восстановления'
 
     entity_name = models.CharField(max_length=50, choices=EntityType.choices, verbose_name='Название справочника')
     name = models.CharField(max_length=255, verbose_name='Название')
@@ -33,15 +33,15 @@ class Service(models.Model): # сервисная компания
 
 class Machine(models.Model): # Машина
     serial_number = models.CharField(max_length=255, verbose_name='Зав. № машины')
-    technique_model = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Модель техники', limit_choices_to={'entity_name': Directory.EntityType.TECHNIQUE_MODEL})
-    engine_model = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Модель двигателя', limit_choices_to={'entity_name': Directory.EntityType.ENGINE_MODEL})
-    engine_serial_number = models.CharField(max_length=255, on_delete=models.CASCADE, verbose_name='Зав. № двигателя')
-    transmission_model = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Модель трансмиссии', limit_choices_to={'entity_name': Directory.EntityType.TRANSMISSION_MODEL})
-    transmission_serial_number = models.CharField(max_length=255, on_delete=models.CASCADE, verbose_name='Зав. № трансмиссии')
-    driven_axle_model = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Модель ведущего моста', limit_choices_to={'entity_name': Directory.EntityType.DRIVEN_AXLE_MODEL})
-    driven_axle_serial_number = models.CharField(max_length=255, on_delete=models.CASCADE, verbose_name='Зав. № ведущего моста')
-    steered_axle_model = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Модель управляемого моста', limit_choices_to={'entity_name': Directory.EntityType.STEERED_AXLE_MODEL})
-    steered_axle_serial_number = models.CharField(max_length=255, on_delete=models.CASCADE, verbose_name='Зав. № управляемого моста')
+    technique_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='technique_machines', verbose_name='Модель техники', limit_choices_to={'entity_name': Directory.EntityType.TECHNIQUE_MODEL})
+    engine_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='engine_machines', verbose_name='Модель двигателя', limit_choices_to={'entity_name': Directory.EntityType.ENGINE_MODEL})
+    engine_serial_number = models.CharField(max_length=255, verbose_name='Зав. № двигателя')
+    transmission_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='transmission_machines', verbose_name='Модель трансмиссии', limit_choices_to={'entity_name': Directory.EntityType.TRANSMISSION_MODEL})
+    transmission_serial_number = models.CharField(max_length=255, verbose_name='Зав. № трансмиссии')
+    driven_axle_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='driven_axle_machines', verbose_name='Модель ведущего моста', limit_choices_to={'entity_name': Directory.EntityType.DRIVEN_AXLE_MODEL})
+    driven_axle_serial_number = models.CharField(max_length=255, verbose_name='Зав. № ведущего моста')
+    steered_axle_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='steered_axle_machines', verbose_name='Модель управляемого моста', limit_choices_to={'entity_name': Directory.EntityType.STEERED_AXLE_MODEL})
+    steered_axle_serial_number = models.CharField(max_length=255, verbose_name='Зав. № управляемого моста')
     delivery_contract_number = models.CharField(max_length=255, verbose_name='Договор поставки №, дата')
     shipping_date = models.DateField(verbose_name='Дата отгрузки с завода')
     cargo_receiver = models.CharField(max_length=255, verbose_name='Грузополучатель')
@@ -77,10 +77,17 @@ class Complaint(models.Model): # рекламация
     service_company = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name='Сервисная компания')
     date_refuse = models.DateField(verbose_name='Дата отказа')
     operating_hours = models.IntegerField(verbose_name='Наработка, м/час')
-    failure_node = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Узел отказа', limit_choices_to={'entity_name': Directory.EntityType.FAILURE_NODE})
+    failure_node = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='failure_complaints', verbose_name='Узел отказа', limit_choices_to={'entity_name': Directory.EntityType.FAILURE_NODE})
     failure_description = models.CharField(max_length=255, verbose_name='Описание отказа')
-    recovery_method = models.ForeignKey(Directory, on_delete=models.CASCADE, verbose_name='Способ восстановления', limit_choices_to={'entity_name': Directory.EntityType.RECOVERY_METHOD})
+    recovery_method = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='recovery_complaints', verbose_name='Способ восстановления', limit_choices_to={'entity_name': Directory.EntityType.RECOVERY_METHOD})
     parts_used = models.TextField(verbose_name='Используемые запасные части')
     recovery_date = models.DateField(verbose_name='Дата восстановления')
     downtime = models.CharField(max_length=255, verbose_name='Время простоя техники')
+
+    def __str__(self):
+        return f"Рекламация {self.machine}"
+
+    class Meta:
+        verbose_name = "Рекламация"
+        verbose_name_plural = "Рекламации"
     
