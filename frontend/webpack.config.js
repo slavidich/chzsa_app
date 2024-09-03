@@ -31,6 +31,27 @@ module.exports={
                 test: /\.(scss|css)$/,
                 use: ["style-loader","css-loader", 'sass-loader']
             },
+            {
+                test:/\.(webp)$/,
+                use:[
+                    {
+                        loader: 'file-loader',
+                        options:{
+                            name:'[name].[ext]',
+                            outputPath: 'img/',
+                        },
+                    },
+                    {
+                        loader: 'image-webpack-loader',
+                        options: {
+                            mozjpeg:{
+                                progressive:true,
+                                quality:65
+                            }
+                        }
+                    }
+                ]
+            }
         ]
     }
 }

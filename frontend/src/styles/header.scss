@@ -1,0 +1,17 @@
+@import "../styles/colors.scss";
+
+.header{
+    height:85px;
+    background-color: $main-color;
+    display:flex;
+    justify-content: center;
+    .main{
+        width:100%;
+        max-width:1440px;
+        height: 100%;
+        padding: 0 2vw 0 2vw;
+        .logo{
+            max-width: 150px;
+        }
+    }
+}
