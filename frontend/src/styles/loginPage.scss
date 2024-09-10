@@ -4,4 +4,55 @@
     display:flex;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    form{
+        min-width: 320px;
+        min-height: 250px;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+        box-sizing: border-box;
+        div{
+            box-sizing: border-box;
+            overflow: hidden;
+            input{
+                box-sizing: border-box;
+                font-size: 25px;
+                text-align: center;
+                border-radius: 5px;
+                border:none;
+                background-color: none;
+                width:100%;
+                margin-bottom:25px;
+                border: 1px solid #ccc;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+                transition: border-color 0.3s;
+                &:focus{
+                    border: 1px solid #9ea600;
+
+                    outline: none;
+                }
+            }
+            
+        }
+        div.error{
+            color:red;
+            font-size:25px
+        }
+        button{
+            
+            font-size: 25px;
+            width:100%;
+            border: solid #ccc 1px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            &:hover{
+                background-color: #b0b0b0;
+            }
+        }
+        button.error{
+            margin-top:25px;
+        }
+    }
 }

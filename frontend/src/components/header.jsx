@@ -15,7 +15,7 @@ function Header(){
     <div className="header">
         <div className="main">
             <div className="logo">
-                <Link to='/'><Logored /></Link>
+                <Link to='/'><Logored/></Link>
             </div>
             
             

@@ -8,6 +8,7 @@ import Footer from './footer.jsx'
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
+const MainPage = React.lazy(()=> import('./mainPage.jsx'))
 
 const checkAuthStatus = async ()=>{
     console.log('Проверка куки')
@@ -18,7 +19,7 @@ function App() {
     const location = useLocation()
     useEffect(()=>{
         checkAuthStatus()
-    }, [location.path])
+    }, [location])
     return (
     <>
 
@@ -26,6 +27,8 @@ function App() {
         <main>
             <Suspense>
                 <Routes>
+
+                    <Route path="/" element={<MainPage/>}></Route>
                     <Route path="/login" element={<LoginPage/>} />
                 </Routes>
             </Suspense>
