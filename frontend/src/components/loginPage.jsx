@@ -3,15 +3,38 @@ import '../styles/loginPage.scss'
 import Logored from '../img/logored.svg' 
 import { useSelector, useDispatch } from 'react-redux'
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
+import axios from 'axios';
 
 function LoginPage (){
-    const [username, setUsername] = React.useState('');
-    const [password, setPassword] = React.useState('');
+    const dispatch = useDispatch();
+    const [username, setUsername] = React.useState('manager1');
+    const [password, setPassword] = React.useState('123ewqytr');
+    const [loading, setLoading] = React.useState('')
     const [error, setError] = React.useState(false)
 
-    const handleSubmit = (event) =>{
+    const handleSubmit = async (event) =>{
         event.preventDefault();
-        console.log(username, password)
+        setLoading(true)
+        try {
+            const response = await axios.post(' http://127.0.0.1:8000/api/login',{
+                username: username,
+                password: password,
+            })
+            const data = response.data
+            localStorage.setItem('access_token', data.access);
+            localStorage.setItem('refresh_token', data.refresh);
+            dispatch(loginSuccess(data.username))
+        }
+        catch(respError){
+            console.log(respError)
+            if (respError.response){
+                setError('Ошибка: ', respError.response.data.error)
+            }
+            else{
+                setError('Ошибка: ', respError.message)
+            }
+        }
+        setLoading(false)
     }
     const handleChange = (e) =>{
         const {id, value} = e.target
@@ -38,6 +61,7 @@ function LoginPage (){
                         placeholder='Логин'
                         value={username}
                         onChange={handleChange}
+                        disabled={loading}
                     />
                 </div>
                 <div>
@@ -47,10 +71,11 @@ function LoginPage (){
                         placeholder='Пароль'
                         value={password}
                         onChange={handleChange}
+                        disabled={loading}
                     />
                 </div>
-                {error?<div className='error'><p></p></div>:<></>}
-                <button className={error?'error':undefined} type="submit">Войти</button>
+                {error?<div><p>Ошибка</p></div>:<></>}
+                <button  type="submit" disabled={loading}>Войти</button>
             </form>
         </div>
     </>)

@@ -46,8 +46,17 @@
         .user{
             width:30%;
             display:flex;
-            justify-content: end;
-            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            p{
+                font-size:25px;
+                margin: 0;
+                color:$second-color;
+                &:last-child{
+                    cursor: pointer;
+                }
+            }
             a{
                 font-size: 25px;
                 color:$second-color

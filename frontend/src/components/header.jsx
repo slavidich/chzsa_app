@@ -10,7 +10,11 @@ import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 function Header(){
     const dispatch = useDispatch();
     const isAuth = useSelector(state => state.auth.isAuth)
+    const username = useSelector(state => state.auth.user)
 
+    const handleLogout = () =>{
+
+    }
     return (
     <div className="header">
         <div className="main">
@@ -29,7 +33,8 @@ function Header(){
             <div className="user">
                 {isAuth?
                     <>
-                        <p>Здравствуйте, user</p>
+                        <p>Здравствуйте, {username}</p>
+                        <p onClick={handleLogout}>Выйти</p>
                     </>
                     :
                     <>
