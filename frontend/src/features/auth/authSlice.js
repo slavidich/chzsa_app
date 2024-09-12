@@ -4,19 +4,25 @@ const authSlice = createSlice({
     name:'auth',
     initialState: {
         isAuth: false,
-        user: null,
+        isAuthInProgress: true,
+        username: null,
     },
     reducers:{
         loginSuccess: (state, action)=>{
             state.isAuth = true;
-            state.user = action.payload;
+            state.isAuthInProgress = false;
+            state.username = action.payload;
         },
         logoutSuccess: (state)=>{
             state.isAuth = false;
-            state.user = null;
+            isAuthInProgress = false;
+            state.username = null;
+        },
+        endLogin: (state)=>{
+            state.isAuthInProgress = false
         }
     }
 })
 
-export const {loginSuccess, logoutSuccess} = authSlice.actions
+export const {loginSuccess, logoutSuccess, endLogin} = authSlice.actions
 export default authSlice.reducer

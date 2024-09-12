@@ -16,4 +16,14 @@ main{
     display: flex;
     flex:1;
     background-color: $third-color;
+    .e404{
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        width:100%;
+        p{
+            font-size:45px;
+            color: $second-color
+        }
+    }
 }

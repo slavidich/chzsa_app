@@ -7,10 +7,12 @@ import { Link } from "react-router-dom";
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 
 
+
 function Header(){
     const dispatch = useDispatch();
     const isAuth = useSelector(state => state.auth.isAuth)
-    const username = useSelector(state => state.auth.user)
+    const isAuthInProgress = useSelector(state => state.auth.isAuthInProgress)
+    const username = useSelector(state => state.auth.username)
 
     const handleLogout = () =>{
 
@@ -31,14 +33,21 @@ function Header(){
                 <p>Электронная сервисная книжка "Мой силант"</p>
             </div>
             <div className="user">
-                {isAuth?
+                {isAuthInProgress?
                     <>
-                        <p>Здравствуйте, {username}</p>
-                        <p onClick={handleLogout}>Выйти</p>
+
                     </>
-                    :
+                :
                     <>
-                        <Link to='/login'>Войти</Link>
+                        {isAuth?
+                            <>
+                                <p>{username}</p>
+                                <p onClick={handleLogout}>Выйти</p>
+                            </>
+                            :
+                            <>
+                                <Link to='/login'>Войти</Link>
+                            </>}
                     </>}
             </div>
         </div>

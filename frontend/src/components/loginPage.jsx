@@ -4,6 +4,8 @@ import Logored from '../img/logored.svg'
 import { useSelector, useDispatch } from 'react-redux'
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
+import {mainAddress} from './app.jsx'
 
 function LoginPage (){
     const dispatch = useDispatch();
@@ -11,19 +13,22 @@ function LoginPage (){
     const [password, setPassword] = React.useState('123ewqytr');
     const [loading, setLoading] = React.useState('')
     const [error, setError] = React.useState(false)
+    const navigate = useNavigate(); 
 
     const handleSubmit = async (event) =>{
         event.preventDefault();
         setLoading(true)
         try {
-            const response = await axios.post(' http://127.0.0.1:8000/api/login',{
+            const response = await axios.post(`${mainAddress}/api/login`,{
                 username: username,
                 password: password,
+            },{
+                withCredentials: true,
             })
             const data = response.data
-            localStorage.setItem('access_token', data.access);
-            localStorage.setItem('refresh_token', data.refresh);
+            localStorage.setItem('access_token', data.access_token)
             dispatch(loginSuccess(data.username))
+            navigate('/')
         }
         catch(respError){
             console.log(respError)
