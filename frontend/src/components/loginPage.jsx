@@ -26,17 +26,16 @@ function LoginPage (){
                 withCredentials: true,
             })
             const data = response.data
-            localStorage.setItem('access_token', data.access_token)
             dispatch(loginSuccess(data.username))
             navigate('/')
         }
         catch(respError){
-            console.log(respError)
-            if (respError.response){
-                setError('Ошибка: ', respError.response.data.error)
+            console.log(respError.response)
+            if (respError.response.status===401){
+                setError('Неправильный логин или пароль')
             }
             else{
-                setError('Ошибка: ', respError.message)
+                setError('Ошибка: ', respError.response.statusText)
             }
         }
         setLoading(false)
@@ -79,7 +78,7 @@ function LoginPage (){
                         disabled={loading}
                     />
                 </div>
-                {error?<div><p>Ошибка</p></div>:<></>}
+                {error?<div><p>{error}</p></div>:<></>}
                 <button  type="submit" disabled={loading}>Войти</button>
             </form>
         </div>

@@ -21,22 +21,15 @@ function App() {
         try{
             const response = await axios.post(`${mainAddress}/api/token/refresh`,{},{withCredentials:true})
             const data= response.data
-            localStorage.setItem('access_token', data.access_token)
             dispatch(loginSuccess(data.username))
         }catch(error){
-            
+            dispatch(logoutSuccess())
             return false
         }
     }
     const checkAuthStatus = async ()=>{
-        if (localStorage.getItem('access_token')==undefined){
-            dispatch(logoutSuccess())
-            return false
-        }
         try{
-            const response = await axios.post(`${mainAddress}/api/token/whoami`, {
-                access_token:localStorage.getItem('access_token')
-            })
+            const response = await axios.post(`${mainAddress}/api/token/whoami`, {}, {withCredentials:true})
             const data = response.data
             dispatch(loginSuccess(data.username))
         } catch (error){

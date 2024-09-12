@@ -145,13 +145,19 @@ from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=5),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_COOKIE': 'access_token',
+    'AUTH_COOKIE_HTTPONLY': True,   # Cookie доступны только серверу
+    'AUTH_COOKIE_SAMESITE': 'Lax',  # Защита от CSRF атак
+    'REFRESH_COOKIE': 'refresh_token',
+    'REFRESH_COOKIE_SAMESITE': 'Lax',
 }
-SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'  # Ограничение передачи только с тем же сайтом
+
 
 

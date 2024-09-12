@@ -19,31 +19,34 @@ def get_tokens_for_user(user):
 
 @api_view(['POST'])
 def refreshtokens(request):
-    refresh_token = request.COOKIE.get('refresh_token')
+    refresh_token = request.COOKIES.get('refresh_token')
     if not refresh_token:
         return Response({"error": "Invalid token and no refresh token provided"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
         refresh = RefreshToken(refresh_token)
         if refresh.check_exp():
             return Response({"error": "Refresh token has expired"}, status=status.HTTP_401_UNAUTHORIZED)
-        new_refresh_token = str(RefreshToken.for_user(refresh.payload['user_id']))
-        new_access_token = str(new_refresh_token.access_token)
-        user_id = new_access_token.payload['user_id']
+        user_id = refresh.payload['user_id']
         user = User.objects.get(id=user_id)
+        new_refresh_token = RefreshToken.for_user(user)
+        new_access_token = new_refresh_token.access_token
         response = Response({
             "username": user.username,
-            "access_token": new_access_token
         })
-        response.set_cookie('refresh_token', new_refresh_token, httponly=True, max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+        response.set_cookie('access_token', new_access_token, httponly=True, max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+        response.set_cookie('refresh_token', new_refresh_token, path='/api/token/refresh', httponly=True, max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
         return response
     except TokenError:
         return Response({"error": "Invalid refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 def whoami(request):
-    access_token = request.data.get('access_token')
+    access_token = request.COOKIES.get('access_token')
+    print(access_token)
+    user = request.user
+    print(user)
     if not access_token:
-        return Response({"error": "No access token provided"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
         token = AccessToken(access_token)
         user_id = token.payload['user_id']
@@ -68,16 +71,24 @@ def login_view(request):
         tokens = get_tokens_for_user(user)
         response = JsonResponse({
             'username': user.username,
-            'access_token': tokens['access']
         })
-        print(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'])
+        response.set_cookie(
+            key='access_token',
+            value=tokens['access'],
+            max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(),
+            httponly = True,
+            secure=True,
+            samesite='Lax',
+            path='/'
+        )
         response.set_cookie(
             key='refresh_token',
             value=tokens['refresh'],
             max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds(),
-            secure=True,
             httponly = True,
-            path='/'
+            secure=True,
+            samesite='Lax',
+            path='/api/token/refresh'
         )
         return response
     else:

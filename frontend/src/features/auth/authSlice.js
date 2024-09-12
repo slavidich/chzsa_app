@@ -15,7 +15,7 @@ const authSlice = createSlice({
         },
         logoutSuccess: (state)=>{
             state.isAuth = false;
-            isAuthInProgress = false;
+            state.isAuthInProgress = false;
             state.username = null;
         },
         endLogin: (state)=>{
