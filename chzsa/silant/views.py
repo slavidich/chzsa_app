@@ -30,8 +30,10 @@ def refreshtokens(request):
         user = User.objects.get(id=user_id)
         new_refresh_token = RefreshToken.for_user(user)
         new_access_token = new_refresh_token.access_token
+        group = user.groups.all()[0]
         response = Response({
             "username": user.username,
+            'role': str(group)
         })
         response.set_cookie('access_token', new_access_token, httponly=True, max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
         response.set_cookie('refresh_token', new_refresh_token, path='/api/token/refresh', httponly=True, max_age=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
@@ -42,17 +44,17 @@ def refreshtokens(request):
 @api_view(['POST'])
 def whoami(request):
     access_token = request.COOKIES.get('access_token')
-    print(access_token)
     user = request.user
-    print(user)
     if not access_token:
         return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
         token = AccessToken(access_token)
         user_id = token.payload['user_id']
         user = User.objects.get(id=user_id)
+        group = user.groups.all()[0]
         return Response({
             "username": user.username,
+            'role': str(group)
         })
     except TokenError:
         return Response({"error":"Update your access token"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -67,10 +69,12 @@ def login_view(request):
         return Response({'error': 'Введите и имя пользователя, и пароль'}, status=status.HTTP_400_BAD_REQUEST)
 
     user = authenticate(username=username, password=password)
+    group = user.groups.all()[0]
     if user is not None:
         tokens = get_tokens_for_user(user)
         response = JsonResponse({
             'username': user.username,
+            'role': str(group)
         })
         response.set_cookie(
             key='access_token',

@@ -5,6 +5,7 @@ import Telegram from '../img/tg.svg'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link } from "react-router-dom";
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -13,9 +14,10 @@ function Header(){
     const isAuth = useSelector(state => state.auth.isAuth)
     const isAuthInProgress = useSelector(state => state.auth.isAuthInProgress)
     const username = useSelector(state => state.auth.username)
+    const navigate = useNavigate()
 
     const handleLogout = () =>{
-
+        dispatch(logoutSuccess())
     }
     return (
     <div className="header">

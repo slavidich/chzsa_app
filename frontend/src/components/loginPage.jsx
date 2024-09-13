@@ -26,11 +26,14 @@ function LoginPage (){
                 withCredentials: true,
             })
             const data = response.data
-            dispatch(loginSuccess(data.username))
+            dispatch(loginSuccess({username: data.username, role:data.role}))
             navigate('/')
         }
         catch(respError){
-            console.log(respError.response)
+            if(respError.code==='ERR_NETWORK'){
+                setError('Нет соединения с сервером')
+                return
+            }
             if (respError.response.status===401){
                 setError('Неправильный логин или пароль')
             }

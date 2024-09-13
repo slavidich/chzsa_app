@@ -15,23 +15,28 @@ export const mainAddress = 'http://127.0.0.1:8000'
 
 function App() {
     const dispatch = useDispatch();
+    const role = useSelector(state=>state.auth.role)
     const location = useLocation()
 
     const updateAccessToken = async()=>{
         try{
             const response = await axios.post(`${mainAddress}/api/token/refresh`,{},{withCredentials:true})
             const data= response.data
-            dispatch(loginSuccess(data.username))
+            dispatch(loginSuccess({username: data.username, role:data.role}))
         }catch(error){
             dispatch(logoutSuccess())
             return false
         }
     }
     const checkAuthStatus = async ()=>{
+        if (localStorage.getItem('IWasHere')==null){
+            dispatch(logoutSuccess())
+            return false
+        }
         try{
             const response = await axios.post(`${mainAddress}/api/token/whoami`, {}, {withCredentials:true})
             const data = response.data
-            dispatch(loginSuccess(data.username))
+            dispatch(loginSuccess({username: data.username, role:data.role}))
         } catch (error){
             if (error.status===401){
                 updateAccessToken()
