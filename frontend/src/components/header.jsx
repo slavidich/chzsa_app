@@ -15,24 +15,25 @@ function Header(){
     const isAuthInProgress = useSelector(state => state.auth.isAuthInProgress)
     const username = useSelector(state => state.auth.username)
     const navigate = useNavigate()
+    const role = useSelector(state=>state.auth.role)
 
     const handleLogout = () =>{
         dispatch(logoutSuccess())
+        navigate('/')
     }
     return (
-    <div className="header">
+    <div className={isAuth?"header":"header-low header "}>
         <div className="main">
             <div className="logo">
                 <Link to='/'><Logored/></Link>
             </div>
-            
-            
             <div className="contacts">
+                <p>Электронная сервисная книжка "Мой силант"</p>
                 <div className="telegram">
                     <p>+7(8352)20-12-09</p>
                     <Telegram></Telegram>
                 </div>
-                <p>Электронная сервисная книжка "Мой силант"</p>
+                
             </div>
             <div className="user">
                 {isAuthInProgress?
@@ -43,6 +44,7 @@ function Header(){
                     <>
                         {isAuth?
                             <>
+
                                 <p>{username}</p>
                                 <p onClick={handleLogout}>Выйти</p>
                             </>
@@ -52,7 +54,18 @@ function Header(){
                             </>}
                     </>}
             </div>
+
         </div>
+        {isAuth?
+            <div className="buttons">
+                {role==='Менеджер'?<Link to='/directories'>Справочники</Link>:<></>}
+                <Link to='/cars'>Машины</Link>
+                <Link to='/to'>ТО</Link>
+                <Link to='/complaint'>Рекламации</Link>
+            </div>
+        :
+            <></>
+        }
     </div>
     )
 }

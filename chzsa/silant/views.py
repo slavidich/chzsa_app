@@ -10,6 +10,25 @@ from rest_framework_simplejwt.exceptions import TokenError
 from chzsa import settings
 
 
+def check_role(role):
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            access_token = request.COOKIES.get('access_token')
+            if not access_token:
+                return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
+            try:
+                token = AccessToken(access_token)
+                user_id = token.payload['user_id']
+                user = User.objects.get(id=user_id)
+                if not user.groups.filter(name=role).exists():
+                    return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -44,7 +63,6 @@ def refreshtokens(request):
 @api_view(['POST'])
 def whoami(request):
     access_token = request.COOKIES.get('access_token')
-    user = request.user
     if not access_token:
         return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
     try:
@@ -98,7 +116,9 @@ def login_view(request):
     else:
         return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['POST'])
-def logout_view(request):
-    print('test')
+@api_view(['GET'])
+@check_role('Менеджер')
+def get_all_directory_types(request):
+    print('role менеджер')
+    return Response({'message': 'Все хорошо'}, status=status.HTTP_200_OK)
 

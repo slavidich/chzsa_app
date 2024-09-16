@@ -8,8 +8,11 @@ import Footer from './footer.jsx'
 import { endLogin, loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import axios from "axios";
 
+
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
+const Directories = React.lazy(()=>import('./directories.jsx'))
+
 export const mainAddress = 'http://127.0.0.1:8000'
 
 
@@ -18,6 +21,12 @@ function App() {
     const role = useSelector(state=>state.auth.role)
     const location = useLocation()
 
+    const ProtectedRoute = ({requiredRole, children})=>{
+        if (role!==requiredRole){
+            return <Navigate to="/" replace />;
+        }
+        return children
+    }
     const updateAccessToken = async()=>{
         try{
             const response = await axios.post(`${mainAddress}/api/token/refresh`,{},{withCredentials:true})
@@ -59,6 +68,8 @@ function App() {
                     <Route path="/" element={<MainPage/>}></Route>
                     <Route path="/login" element={<LoginPage/>} />
                     <Route path="*" element={<div className='e404'><p>404... not found</p></div>} />
+                    <Route path='/directories' element={<Directories/>}/>
+                    <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                 </Routes>
             </Suspense>
         </main>
