@@ -7,6 +7,7 @@ import Header from './header.jsx'
 import Footer from './footer.jsx'
 import { endLogin, loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
@@ -20,10 +21,14 @@ function App() {
     const dispatch = useDispatch();
     const role = useSelector(state=>state.auth.role)
     const location = useLocation()
+    const [isAuthChecking, setIsAuthChecking] = React.useState(true)
 
     const ProtectedRoute = ({requiredRole, children})=>{
+        if (isAuthChecking) {
+            return <div></div>;
+        }
         if (role!==requiredRole){
-            return <Navigate to="/" replace />;
+            return <Navigate to="/forbidden" replace />;
         }
         return children
     }
@@ -38,8 +43,10 @@ function App() {
         }
     }
     const checkAuthStatus = async ()=>{
+        setIsAuthChecking(true);
         if (localStorage.getItem('IWasHere')==null){
             dispatch(logoutSuccess())
+            setIsAuthChecking(false);
             return false
         }
         try{
@@ -48,10 +55,13 @@ function App() {
             dispatch(loginSuccess({username: data.username, role:data.role}))
         } catch (error){
             if (error.status===401){
-                updateAccessToken()
+                await updateAccessToken()
             } else{
                 dispatch(logoutSuccess())
             }
+        }finally
+        {
+            setIsAuthChecking(false);
         }
         return true
     }
@@ -68,7 +78,7 @@ function App() {
                     <Route path="/" element={<MainPage/>}></Route>
                     <Route path="/login" element={<LoginPage/>} />
                     <Route path="*" element={<div className='e404'><p>404... not found</p></div>} />
-                    <Route path='/directories' element={<Directories/>}/>
+                    <Route path='/directories' element={<ProtectedRoute requiredRole='Менеджер'><Directories/></ProtectedRoute>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                 </Routes>
             </Suspense>

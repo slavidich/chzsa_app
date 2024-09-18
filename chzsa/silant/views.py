@@ -6,6 +6,8 @@ from rest_framework import status
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from .serializers import DirectorySerializer
+from .models import *
 
 from chzsa import settings
 
@@ -119,6 +121,7 @@ def login_view(request):
 @api_view(['GET'])
 @check_role('Менеджер')
 def get_all_directory_types(request):
-    print('role менеджер')
-    return Response({'message': 'Все хорошо'}, status=status.HTTP_200_OK)
+    directories = Directory.objects.all()
+    serializer = DirectorySerializer(directories, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
