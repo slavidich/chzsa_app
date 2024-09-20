@@ -45,9 +45,18 @@ function Directories(){
     }
 
     return(
-    <>
-        <div className='directories'></div>
-        <p>Справочники!</p>
-    </>)
+    <div className='directories'>
+        <div className='types'>
+            {directorieslist.map(([key, label]) => (
+                <p key={key} onClick={() => setActiveType(key)} className={activeType === key ? 'active' : ''}>
+                    {label}
+                </p>
+            ))}
+        </div>    
+        <div className='list'>
+            
+        </div>       
+        
+    </div>)
 }
 export default Directories
