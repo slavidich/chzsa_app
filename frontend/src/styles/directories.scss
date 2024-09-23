@@ -1,13 +1,40 @@
 @import "../styles/colors.scss";
 
 .directories{
+    display:flex;
+
     width: 100%;
     max-width: 1440px;
-    padding: 0 2vw 0 2vw;
+    
     .types{
-
+        max-width: 260px;
+        min-width: 155px;
+        background-color: rgba(234, 234, 234, 0.46);
+        p{
+            cursor: pointer;
+            margin:0;
+            padding: min(1vh, 9px) min(2vw,26px) min(1vh, 9px) min(2vw,26px);
+            &:hover{
+                background-color: rgb(193, 193, 193);
+            }
+        }
+        p.active{
+            background-color: rgb(193, 193, 193);
+        }
     }
     .list{
-        
+        padding: 0 2vw 0 0vw;
+    }
+    .modal-overlay {
+        position:fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5); /* Затемнение фона */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
     }
 }

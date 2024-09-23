@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -118,10 +119,24 @@ def login_view(request):
     else:
         return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @check_role('Менеджер')
-def get_all_directory_types(request):
-    directories = Directory.objects.all()
-    serializer = DirectorySerializer(directories, many=True)
-    return JsonResponse(serializer.data, safe=False)
-
+def directories(request):
+    if request.method=='GET':
+        entity_name = request.query_params.get('entity_name', None)
+        if entity_name:
+            directories = Directory.objects.filter(entity_name=entity_name)
+        else:
+            directories = Directory.objects.all()
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result_page = paginator.paginate_queryset(directories, request)
+        serializer = DirectorySerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    elif request.method=='POST':
+        serializer = DirectorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  # тут сохранение происходит
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

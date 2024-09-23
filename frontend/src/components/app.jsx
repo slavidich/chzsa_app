@@ -5,8 +5,7 @@ import { useLocation } from 'react-router-dom';
 import "../styles/app.scss";
 import Header from './header.jsx'
 import Footer from './footer.jsx'
-import { endLogin, loginSuccess, logoutSuccess } from "../features/auth/authSlice";
-import axios from "axios";
+import { checkAuthStatus, refreshTokenIfNeeded } from './authUtils';
 import { Navigate } from "react-router-dom";
 
 
@@ -15,6 +14,7 @@ const MainPage = React.lazy(()=> import('./mainPage.jsx'))
 const Directories = React.lazy(()=>import('./directories.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
+export const accessLifeTime = 10*1000
 
 
 function App() {
@@ -32,43 +32,11 @@ function App() {
         }
         return children
     }
-    const updateAccessToken = async()=>{
-        try{
-            const response = await axios.post(`${mainAddress}/api/token/refresh`,{},{withCredentials:true})
-            const data= response.data
-            dispatch(loginSuccess({username: data.username, role:data.role}))
-        }catch(error){
-            dispatch(logoutSuccess())
-            return false
-        }
-    }
-    const checkAuthStatus = async ()=>{
-        setIsAuthChecking(true);
-        if (localStorage.getItem('IWasHere')==null){
-            dispatch(logoutSuccess())
-            setIsAuthChecking(false);
-            return false
-        }
-        try{
-            const response = await axios.post(`${mainAddress}/api/token/whoami`, {}, {withCredentials:true})
-            const data = response.data
-            dispatch(loginSuccess({username: data.username, role:data.role}))
-        } catch (error){
-            if (error.status===401){
-                await updateAccessToken()
-            } else{
-                dispatch(logoutSuccess())
-            }
-        }finally
-        {
-            setIsAuthChecking(false);
-        }
-        return true
-    }
 
     useEffect(()=>{
-        checkAuthStatus()
-    }, [])
+        checkAuthStatus(dispatch, setIsAuthChecking)
+    }, [dispatch])
+    
     return (
     <>
         <Header/>
