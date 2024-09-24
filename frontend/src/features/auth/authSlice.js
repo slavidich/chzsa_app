@@ -10,14 +10,12 @@ const authSlice = createSlice({
     },
     reducers:{
         loginSuccess: (state, action)=>{
-            localStorage.setItem('IWasHere', true)
             state.isAuth = true;
             state.isAuthInProgress = false;
             state.username = action.payload.username;
             state.role = action.payload.role;
         },
         logoutSuccess: (state)=>{
-            localStorage.removeItem('IWasHere')
             state.isAuth = false;
             state.isAuthInProgress = false;
             state.username = null;

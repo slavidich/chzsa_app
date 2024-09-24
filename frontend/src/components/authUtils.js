@@ -6,7 +6,7 @@ export const accessLifeTime = 10*1000 // 10 минут условно
 
 export const checkAuthStatus = async (dispatch, setIsAuthChecking) => {
     setIsAuthChecking(true);
-    if (localStorage.getItem('IWasHere') == null) {
+    if (localStorage.getItem('accessTokenExpiration') == null) {
         dispatch(logoutSuccess());
         setIsAuthChecking(false);
         return false;

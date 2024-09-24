@@ -1,36 +1,40 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
+from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from django.http import JsonResponse
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from .serializers import DirectorySerializer
 from .models import *
 
 from chzsa import settings
 
+def get_user_from_request(request):
+    jwt_auth = JWTAuthentication()
+    try:
+        token = request.COOKIES.get('access_token')
+        if not token:
+            return AnonymousUser()
+        validated_token = jwt_auth.get_validated_token(token)
+        user = jwt_auth.get_user(validated_token)
+        return user
+    except InvalidToken:
+        return AnonymousUser()
 
-def check_role(role):
-    def decorator(view_func):
-        def _wrapped_view(request, *args, **kwargs):
-            access_token = request.COOKIES.get('access_token')
-            if not access_token:
-                return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
-            try:
-                token = AccessToken(access_token)
-                user_id = token.payload['user_id']
-                user = User.objects.get(id=user_id)
-                if not user.groups.filter(name=role).exists():
-                    return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return decorator
+def get_role_from_request(request):
+    user = get_user_from_request(request)
+    if isinstance(user, AnonymousUser):
+        return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
+    if user.groups.filter(name='Менеджер').exists():
+        return 'Менеджер'
+    elif user.groups.filter(name='Клиент').exists():
+        return 'Клиент'
+    return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -119,9 +123,13 @@ def login_view(request):
     else:
         return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['GET', 'POST'])
-@check_role('Менеджер')
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 def directories(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check!='Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
     if request.method=='GET':
         entity_name = request.query_params.get('entity_name', None)
         if entity_name:
@@ -140,3 +148,20 @@ def directories(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method=='PUT':
+        data = request.data
+        directory_id = data.get('id')
+        directory = get_object_or_404(Directory, id=directory_id)
+        serializer = DirectorySerializer(directory, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method=='DELETE':
+        data = request.data
+        directory_id = request.query_params.get('id')
+        try:
+            Directory.objects.get(id=directory_id).delete()
+            return Response(f'Справочник с ID={directory_id} был успешно удален', status=status.HTTP_200_OK)
+        except:
+            return Response('Справочник с ID не найден', status=status.HTTP_400_BAD_REQUEST)

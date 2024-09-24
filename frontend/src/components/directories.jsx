@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import '../styles/directories.scss'
 import axios from 'axios';
 import { useDispatch } from "react-redux";
@@ -19,14 +19,16 @@ const directorieslist = [
 
 function Directories(){
     const dispatch = useDispatch();
-    const [loading, setLoading] = React.useState(true)
-    const [error, setError] = React.useState(false)
-    const [directories, setDirectories] = React.useState([])
-    const [activeType, setActiveType] = React.useState(directorieslist[0][0]); // первый тип активный
-    const [showModal, setShowModal] = React.useState(false); // модальное окно
-    const [newDirectory, setNewDirectory] = React.useState({ name: '', description: '' }); // новая запись
-    const [currentPage, setCurrentPage] = React.useState(1); // Текущая страница
-    const [totalPages, setTotalPages] = React.useState(1); // Общее количество страниц
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
+    const [directories, setDirectories] = useState([])
+    const [activeType, setActiveType] = useState(directorieslist[0][0]); // первый тип активный
+    const [showModal, setShowModal] = useState(false); // модальное окно
+    const [newDirectory, setNewDirectory] = useState({ name: '', description: '' }); // новая запись
+    const [isEditing, setIsEditing] = useState(false); // если редактируем какой то элемент 
+    const [selectedItem, setSelectedItem] = useState(null); // Для хранения элемента, который редактируется
+    const [currentPage, setCurrentPage] = useState(1); // Текущая страница
+    const [totalPages, setTotalPages] = useState(1); // Общее количество страниц
 
     const getDirectroies = async(type, page=1)=>{
         setLoading(true);
@@ -50,17 +52,41 @@ function Directories(){
     const handlePageChange = (page) => {
         setCurrentPage(page);
     };
-    const handleAdd = async () => {
+    const handleEdit = (item) => {
+        console.log(item)
+        setSelectedItem(item);
+        setNewDirectory({ name: item.name, description: item.description });
+        setIsEditing(true);
+        setShowModal(true);
+    };
+    const handleAddorEdit = async () => {
+        await refreshTokenIfNeeded(dispatch)
         try {
-            await axios.post(`${mainAddress}/api/directories`, { entity_name: activeType, name: newDirectory.name, description: newDirectory.description }, { withCredentials: true });
-            console.log('добавилось!')
+            if (isEditing){
+                await axios.put(`${mainAddress}/api/directories`,{id:selectedItem.id, name:newDirectory.name, description: newDirectory.description }, {withCredentials:true})
+            } else{
+                await axios.post(`${mainAddress}/api/directories`, { entity_name: activeType, name: newDirectory.name, description: newDirectory.description }, { withCredentials: true });
+            }
             getDirectroies(activeType, currentPage); // Обновляем список после добавления
             setShowModal(false); // Закрыть модальное окно
             setNewDirectory({ name: '', description: '' })
+            setIsEditing(false);
         } catch (error) {
             console.error(error);
         }
     };
+    const handleDelete = async(directory)=>{
+        let reply = window.confirm(`Вы действительно хотите удалить "${directory.name}?"`)
+        if (reply){
+            try{
+                await refreshTokenIfNeeded(dispatch)
+                await axios.delete(`${mainAddress}/api/directories?id=${directory.id}`, {withCredentials:true}) 
+                getDirectroies()
+            } catch(error){
+                console.error(error)
+            }
+        }
+    }
     if (loading){
         return (<div className='e404'>Загрузка</div>)
     }
@@ -80,8 +106,8 @@ function Directories(){
                 {directories.map((directory) => (
                 <li key={directory.id}>
                     {directory.name}
-                    <button onClick={() => handleEdit(directory.id)}>Редактировать</button>
-                    <button onClick={() => handleDelete(directory.id)}>Удалить</button>
+                    <button onClick={() => handleEdit(directory)}>Редактировать</button>
+                    <button onClick={() => handleDelete(directory)}>Удалить</button>
                 </li>
                 ))}
             </ul>
@@ -95,7 +121,8 @@ function Directories(){
         {showModal&&(
             <div className='modal-overlay'>
                 <div className="modal-content">
-                    <form onSubmit={e => { e.preventDefault();  handleAdd();}}>
+                    <h2>{isEditing ? 'Редактировать элемент' : 'Добавить новый элемент'}</h2>
+                    <form onSubmit={e => { e.preventDefault();  handleAddorEdit();}}>
                         <div>
                             <label>Название:</label>
                             <input type="text" value={newDirectory.name} onChange={e => setNewDirectory({ ...newDirectory, name: e.target.value })} required />

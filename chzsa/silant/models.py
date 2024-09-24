@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
+class ActiveDirectoryManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_date__isnull=True)
 class Directory(models.Model): # Справочники
     class EntityType(models.TextChoices):
         TECHNIQUE_MODEL = 'TECHNIQUE_MODEL', 'Модель техники'
@@ -15,13 +18,19 @@ class Directory(models.Model): # Справочники
     entity_name = models.CharField(max_length=50, choices=EntityType.choices, verbose_name='Название справочника')
     name = models.CharField(max_length=255, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
+    deleted_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата удаления')
 
+    objects = ActiveDirectoryManager()
+    all_objects = models.Manager()
     def __str__(self):
         return f"{self.entity_name}: {self.name}"
-
     class Meta:
+        ordering = ['id']
         verbose_name = "Справочник"
         verbose_name_plural = "Справочники"
+    def delete(self, using=None, keep_parents=False):
+        self.deleted_date = timezone.now()
+        self.save()
 
 class Service(models.Model): # сервисная компания
     name = models.CharField(max_length=255, verbose_name='Название')
