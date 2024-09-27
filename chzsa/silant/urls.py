@@ -7,5 +7,6 @@ urlpatterns = [
     path('api/login', login_view, name='login'),
     path('api/token/refresh', refreshtokens, name='refreshtokens'),
     path('api/token/whoami', whoami, name='whoami'),
-    path('api/directories', directories, name='directories')
+    path('api/directories', directories, name='directories'),
+    path('api/searchdirectories',searchdirectories )
 ]

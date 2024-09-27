@@ -123,7 +123,7 @@ def login_view(request):
     else:
         return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@api_view(['GET', 'POST', 'PUT', 'DELETE']) # все это для справочника менеджеров
 def directories(request):
     role_check = get_role_from_request(request)
     if isinstance(role_check, Response):
@@ -137,7 +137,7 @@ def directories(request):
         else:
             directories = Directory.objects.all()
         paginator = PageNumberPagination()
-        paginator.page_size = 10
+        paginator.page_size = 2
         result_page = paginator.paginate_queryset(directories, request)
         serializer = DirectorySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -165,3 +165,19 @@ def directories(request):
             return Response(f'Справочник с ID={directory_id} был успешно удален', status=status.HTTP_200_OK)
         except:
             return Response('Справочник с ID не найден', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET']) # поиск директорий для autocomplete полей
+def searchdirectories(request):
+    entity_name = request.query_params.get('entity_name', None)
+    search_term = request.query_params.get('search', None)
+    if not entity_name:
+        return Response({'error': 'Entity name is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Фильтрация по entity_name
+    directory_items = Directory.objects.filter(entity_name=entity_name)
+
+    # Если передан параметр search, фильтруем по имени
+    if search_term:
+        directory_items = directory_items.filter(name__icontains=search_term)
+    serializer = DirectorySerializer(directory_items, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

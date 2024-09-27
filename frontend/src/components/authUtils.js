@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { loginSuccess, logoutSuccess } from '../features/auth/authSlice'; 
+import {mainAddress, accessLifeTime} from './app.jsx'
 
-export const mainAddress = 'http://127.0.0.1:8000'
-export const accessLifeTime = 10*1000 // 10 минут условно
 
 export const checkAuthStatus = async (dispatch, setIsAuthChecking) => {
     setIsAuthChecking(true);
@@ -42,7 +41,7 @@ export const updateAccessToken = async (dispatch) => {
 };
 
 export const refreshTokenIfNeeded = async (dispatch) => {
-    const expiration = localStorage.getItem('accessTokenExpiration');
+    const expiration = Number(localStorage.getItem('accessTokenExpiration'));
     if (expiration && Date.now() >= expiration) {
         await updateAccessToken(dispatch);
     }

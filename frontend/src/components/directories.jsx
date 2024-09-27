@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useMemo} from "react";
 import '../styles/directories.scss'
 import axios from 'axios';
 import { useDispatch } from "react-redux";
@@ -16,6 +16,7 @@ const directorieslist = [
     ['FAILURE_NODE', 'Узел отказа'],
     ['RECOVERY_METHOD', 'Способ восстановления'],
 ]
+const pagination = 2
 
 function Directories(){
     const dispatch = useDispatch();
@@ -36,7 +37,7 @@ function Directories(){
             await refreshTokenIfNeeded(dispatch)
             const response = await axios.get(`${mainAddress}/api/directories?entity_name=${type}&page=${page}`, {withCredentials: true})
             setDirectories(response.data.results);
-            setTotalPages(Math.ceil(response.data.count / 10));
+            setTotalPages(Math.ceil(response.data.count / pagination));
         }
         catch (error){
             if (error.response && error.response.status===403){
@@ -87,34 +88,36 @@ function Directories(){
             }
         }
     }
-    if (loading){
-        return (<div className='e404'>Загрузка</div>)
-    }
+
     
     return(
-    <div className='directories'>
-        <div className='types'>
-            {directorieslist.map(([key, label]) => (
-                <p key={key} onClick={() => {setActiveType(key); setCurrentPage(1) }} className={activeType === key ? 'active' : ''}>
+        <div className='directories'>
+            <div className='types'>
+                {directorieslist.map(([key, label]) => (
+                <p key={key} onClick={() => { setActiveType(key); setCurrentPage(1); }} className={activeType === key ? 'active' : ''}>
                     {label}
                 </p>
-            ))}
-        </div>    
-        <div className='list'>
-            {directories.length ? (
-            <ul>
-                {directories.map((directory) => (
-                <li key={directory.id}>
-                    {directory.name}
-                    <button onClick={() => handleEdit(directory)}>Редактировать</button>
-                    <button onClick={() => handleDelete(directory)}>Удалить</button>
-                </li>
                 ))}
-            </ul>
-            ) : (
-                <p>Данных нет</p>
-            )}
-            <button onClick={() => setShowModal(true)}>Добавить новый элемент</button>  
+            </div>
+        <div className='list'>
+            {loading?<div className='e404'>Загрузка</div>:
+                <>
+                    {directories.length ? (
+                    <ul>
+                        {directories.map((directory) => (
+                        <li key={directory.id}>
+                            {directory.name}
+                            <button onClick={() => handleEdit(directory)}>Редактировать</button>
+                            <button onClick={() => handleDelete(directory)}>Удалить</button>
+                        </li>
+                        ))}
+                    </ul>
+                    ) : (
+                        <p>Данных нет</p>
+                    )}
+                </>}
+            
+            <button onClick={() => { setNewDirectory({ name: '', description: 'Вышла из строя ' }); setShowModal(true);}}>Добавить новый элемент</button>  
         </div>       
         
         {/* мод окно */ }
@@ -137,6 +140,12 @@ function Directories(){
                 </div>
             </div>
         )}
+
+        {/* Кнопки пагинации */}
+        <div className="pagination">
+            
+        </div>
+        
     </div>)
 }
 export default Directories
