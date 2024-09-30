@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import "../styles/app.scss";
 import Header from './header.jsx'
 import Footer from './footer.jsx'
+
 import { checkAuthStatus, refreshTokenIfNeeded } from './authUtils';
 import { Navigate } from "react-router-dom";
 
@@ -13,6 +14,7 @@ const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
 const Directories = React.lazy(()=>import('./directories.jsx'))
 const Cars = React.lazy(()=>import('./cars.jsx'))
+const Users = React.lazy(()=>import('./users.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 10*1000*60
@@ -50,6 +52,7 @@ function App() {
                     <Route path='/directories' element={<ProtectedRoute requiredRole='Менеджер'><Directories/></ProtectedRoute>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
+                    <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>
                 </Routes>
             </Suspense>
         </main>

@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import DirectorySerializer
+from .serializers import DirectorySerializer, UserSerializer
 from .models import *
 
 from chzsa import settings
@@ -180,4 +180,16 @@ def searchdirectories(request):
     if search_term:
         directory_items = directory_items.filter(name__icontains=search_term)
     serializer = DirectorySerializer(directory_items, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET']) # все для настройки пользователей итд !!!
+def users(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check != 'Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+    target_groups = ['Клиент', 'Сервисная организация']
+    allusers = User.objects.filter(groups__name__in=target_groups)
+    serializer = UserSerializer(allusers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

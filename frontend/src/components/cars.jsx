@@ -2,7 +2,9 @@ import React, {useState, useMemo} from "react";
 import { mainAddress } from "./app.jsx";
 import '../styles/cars.scss'
 import axios from 'axios';
-import AutoCompleteInput from "./autoComplete.jsx";
+import AutoCompleteSearch from './AutoCompleteSearch.jsx'
+import TextField from '@mui/material/TextField';
+
 
 function Cars(){
     const [addCar, setAddCar] = useState(false)
@@ -24,16 +26,27 @@ function Cars(){
         equipment: '',
         client: null,
     });
-
+    const [errors, setErrors] = useState({
+        serial_number: false,
+        technique_model: false,
+        engine_model: false,
+        engine_serial_number: false,
+        transmission_model: false,
+        transmission_serial_number: false,
+        driven_axle_model: false,
+        driven_axle_serial_number: false,
+        steered_axle_model: false,
+        steered_axle_serial_number: false,
+        delivery_contract_number: false,
+        shipping_date: false,
+        cargo_receiver: false,
+        delivery_address: false,
+        equipment: false,
+        client: false,
+    })
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    };
-    const handleAutocompleteChange = (name, value) => {
-        setFormData(prevState => ({
+         setFormData(prevState => ({
             ...prevState,
             [name]: value
         }));
@@ -49,25 +62,21 @@ function Cars(){
                 <div>
                     <button onClick={()=>setAddCar(false)}>Вернуться</button>
                     <form onSubmit={handleSubmit}>
-                        <div>
-                            <label>Зав. № машины:</label>
-                            <input 
-                                type="text" 
-                                name="serial_number" 
-                                value={formData.serial_number} 
-                                onChange={handleInputChange} 
-                                required 
-                            />
-                        </div>
-                        <AutoCompleteInput 
-                            label="Модель техники" 
-                            name="technique_model" 
-                            endpoint={`${mainAddress}/api/searchdirectories?entity_name=TECHNIQUE_MODEL`}
-                            value={formData.technique_model} 
-                            setValue={handleAutocompleteChange} 
+                        <TextField 
+                            name="serial_number"
+                            label="Зав. № машины:" 
+                            variant="outlined" 
+                            value={formData.serial_number} 
+                            onChange={handleInputChange} 
                         />
-
-                        <button type="submit">Добавить</button>
+                        <AutoCompleteSearch
+                            label="Модель двигателя"
+                            name="technique_model"
+                            endpoint={`${mainAddress}/api/searchdirectories?entity_name=TECHNIQUE_MODEL`}
+                            setData={setFormData}
+                            setFormError={setErrors}
+                        />
+                        <button type="submit" onClick={handleSubmit}>Добавить</button>
                     </form>
                 </div>
                 :
