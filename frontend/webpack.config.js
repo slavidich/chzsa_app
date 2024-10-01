@@ -3,15 +3,28 @@ const HtmlWebpackPlugin = require("html-webpack-plugin")
 
 const devMode = process.argv[process.argv.indexOf('--mode') + 1] === 'development';
 
+const TerserPlugin = require('terser-webpack-plugin');
+
 module.exports={
     entry: path.resolve(__dirname, 'src', 'index.js'),
     output:{
         path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js',
+        filename: devMode ? '[name].bundle.js' : '[name].[contenthash].js',
         publicPath: '/',
     },
+    mode: devMode ? 'development' : 'production',
     devServer:{
         historyApiFallback: true,
+    },
+    optimization: {
+        minimize: !devMode,
+        minimizer: [new TerserPlugin()],
+        splitChunks: {
+            chunks: 'all',
+            minSize: 20000,
+            maxSize: 244000,
+            name: false,
+        },
     },
     plugins:[
         new HtmlWebpackPlugin({

@@ -1,0 +1,17 @@
+@import "./colors.scss";
+
+.users{
+    .modelwindow{
+        background-color: white;
+        padding:2vh 2vw;
+        border-radius: 20px;
+        max-width: 500px;
+        .headermodal{
+            justify-content: space-between;
+            background-color: white;
+            display:flex;
+            flex-direction: row;
+        }
+    }
+
+}

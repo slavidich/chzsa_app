@@ -3,6 +3,8 @@ import axios from 'axios';
 import {refreshTokenIfNeeded} from './authUtils'
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
+import { ThemeProvider } from '@emotion/react';
+import { theme } from './app.jsx';
 
 function AutoCompleteSearch({endpoint, label, name, setData, setFormError}){
     const [options, setOptions] = useState([]);
@@ -51,24 +53,26 @@ function AutoCompleteSearch({endpoint, label, name, setData, setFormError}){
         }
     }
     return (
-        <Autocomplete
-            options={options}
-            getOptionLabel = {(option)=>option.name}
-            loading={loading}
-            noOptionsText={'Нет вариантов'}
-            loadingText={'Загрузка...'}
-            onInputChange={handleSearch}
-            onChange={handleChange}
-            renderInput={(params)=>(
-                <TextField
-                    {...params}
-                    label={label}
-                    variant="outlined"
-                    fullWidth
-                    error={error}
-                />
-            )}
-        />
+        <ThemeProvider theme={theme}>
+            <Autocomplete 
+                options={options}
+                getOptionLabel = {(option)=>option.name}
+                loading={loading}
+                noOptionsText={'Нет вариантов'}
+                loadingText={'Загрузка...'}
+                onInputChange={handleSearch}
+                onChange={handleChange}
+                renderInput={(params)=>(
+                    <TextField
+                        {...params}
+                        label={label}
+                        variant="outlined"
+                        fullWidth
+                        error={error}
+                    />
+                )}
+            />
+        </ThemeProvider>
     )
 }
 

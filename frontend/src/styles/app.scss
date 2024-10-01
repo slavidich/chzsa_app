@@ -3,7 +3,7 @@
 html, body {
     height: 100%;
     margin: 0;
-    font-family:  "PT Sans";
+    font-family:  "PT Sans" !important;
     box-sizing: border-box;
 }
 #root{
@@ -26,4 +26,16 @@ main{
             color: $second-color
         }
     }
+}
+.modal-overlay {
+    position:fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5); /* Затемнение фона */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }

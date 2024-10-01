@@ -1,14 +1,13 @@
 import React, {useEffect, Suspense} from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import {Routes, Route, Link} from "react-router-dom"
-import { useLocation } from 'react-router-dom';  
+import {Routes, Route} from "react-router-dom"
 import "../styles/app.scss";
 import Header from './header.jsx'
 import Footer from './footer.jsx'
 
-import { checkAuthStatus, refreshTokenIfNeeded } from './authUtils';
+import { checkAuthStatus } from './authUtils';
 import { Navigate } from "react-router-dom";
-
+import { createTheme } from '@mui/material/styles';
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
@@ -18,12 +17,18 @@ const Users = React.lazy(()=>import('./users.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 10*1000*60
-
+export const theme = createTheme({
+    typography: {
+      fontFamily: [
+        'PT  Sans',
+        'sans-serif',
+      ].join(','),
+    },
+});
 
 function App() {
     const dispatch = useDispatch();
     const role = useSelector(state=>state.auth.role)
-    const location = useLocation()
     const [isAuthChecking, setIsAuthChecking] = React.useState(true)
 
     const ProtectedRoute = ({requiredRole, children})=>{
