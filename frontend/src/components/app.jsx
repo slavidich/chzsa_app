@@ -7,7 +7,6 @@ import Footer from './footer.jsx'
 
 import { checkAuthStatus } from './authUtils';
 import { Navigate } from "react-router-dom";
-import { createTheme } from '@mui/material/styles';
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
@@ -17,14 +16,7 @@ const Users = React.lazy(()=>import('./users.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 10*1000*60
-export const theme = createTheme({
-    typography: {
-      fontFamily: [
-        'PT  Sans',
-        'sans-serif',
-      ].join(','),
-    },
-});
+
 
 function App() {
     const dispatch = useDispatch();

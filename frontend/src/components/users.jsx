@@ -7,6 +7,8 @@ import { refreshTokenIfNeeded } from "./authUtils.js";
 import { Navigate } from "react-router-dom";
 import { TextField, Button, FormControl, FormLabel, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { ThemeProvider } from '@emotion/react';
+import { theme } from './muiUtil';
 
 function Users(){
     const dispatch = useDispatch();
@@ -15,12 +17,14 @@ function Users(){
     const [showModal, setShowModal] = useState(false)
     const [formData, setFormData] = useState({
         userType: 'client',
+        organization:'',
         firstName: '',
         lastName: '',
         email: ''
     });
     const [errors, setErrors] = useState({
         firstName: false,
+        organization:false,
         lastName: false,
         email: false
     });
@@ -41,6 +45,9 @@ function Users(){
     }
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name==='userType'){
+            formData.organization='';
+        }
         setFormData({
             ...formData,
             [name]: value
@@ -63,21 +70,39 @@ function Users(){
         });
     };
     const isFormValid = () => {
-        return (
-            formData.firstName.trim() !== '' &&
+        const requireInputs = formData.firstName.trim() !== '' &&
             formData.lastName.trim() !== '' &&
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-        );
+        if (formData.userType==='client'){
+            return requireInputs
+        } else{
+            return requireInputs && formData.organization.trim()!==''
+        }
+        
     };
-    const handleSubmit = (e)=>{
+    const handleSubmit = async (e)=>{
         e.preventDefault()
         if (!isFormValid()) return;
-        console.log(formData)
+        try{
+            await refreshTokenIfNeeded(dispatch)
+            const response = await axios.post(`${mainAddress}/api/createuser`,
+            {
+                ...formData
+            },
+            {
+                withCredentials:true,
+            })
+        }catch(error){
+            console.log(error)
+        }
+        
+
     }
     useEffect(()=>{
         fetchUsers()
     },[])
     return(
+        <ThemeProvider theme={theme}>
         <div className="users">
             <div>
                 <button onClick={()=>setShowModal(true)}>
@@ -105,15 +130,32 @@ function Users(){
                                 aria-label="userType"
                                 name="userType"
                                 defaultValue="client"
+                                value={formData.userType}
+                                onChange={handleChange}
                             >
                                 <FormControlLabel value="client" control={<Radio />} label="Клиент" />
                                 <FormControlLabel value="service" control={<Radio />} label="Сервисная организация" />
                             </RadioGroup>
                         </FormControl>
+                        {formData.userType==='service'&&(
+                            <FormControl fullWidth margin="normal">
+                                <TextField
+                                    id='organization'
+                                    label='Название организации'
+                                    variant='outlined'
+                                    name='organization'
+                                    value={formData.organization}
+                                    onChange={handleChange}
+                                    error={errors.organization}
+                                    helperText={errors.organization && "Организация не может быть пустым"}
+                                    required
+                                />
+                            </FormControl>
+                        )}
                         <FormControl fullWidth margin="normal">
                             <TextField
                                 id="first-name"
-                                label="Имя"
+                                label={formData.userType==='client'?"Имя":"Имя директора"}
                                 variant="outlined"
                                 name="firstName"
                                 value={formData.firstName}
@@ -126,7 +168,7 @@ function Users(){
                         <FormControl fullWidth margin="normal">
                             <TextField
                                 id="last-name"
-                                label="Фамилия"
+                                label={formData.userType==='client'?"Фамилия":"Фамилия директора"}
                                 variant="outlined"
                                 name="lastName"
                                 value={formData.lastName}
@@ -160,8 +202,8 @@ function Users(){
                     </form>
                 </div>
             }
-            
         </div>
+        </ThemeProvider>
     )
 }
 

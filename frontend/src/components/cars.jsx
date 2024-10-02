@@ -1,7 +1,6 @@
-import React, {useState, useMemo} from "react";
+import React, {useState} from "react";
 import { mainAddress } from "./app.jsx";
 import '../styles/cars.scss'
-import axios from 'axios';
 import AutoCompleteSearch from './AutoCompleteSearch.jsx'
 import TextField from '@mui/material/TextField';
 

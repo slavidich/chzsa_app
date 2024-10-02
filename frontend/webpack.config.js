@@ -2,8 +2,11 @@ const path = require('path')
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 
 const devMode = process.argv[process.argv.indexOf('--mode') + 1] === 'development';
-
+// плагины для оптимизации 
 const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CompressionPlugin = require('compression-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports={
     entry: path.resolve(__dirname, 'src', 'index.js'),
@@ -15,6 +18,7 @@ module.exports={
     mode: devMode ? 'development' : 'production',
     devServer:{
         historyApiFallback: true,
+        host: '127.0.0.1',
     },
     optimization: {
         minimize: !devMode,
@@ -30,19 +34,26 @@ module.exports={
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, "src", "index.html")
         }),
-    ],
+        !devMode && new MiniCssExtractPlugin(),
+        !devMode && new CompressionPlugin(),
+        !devMode && new BundleAnalyzerPlugin()
+    ].filter(Boolean),
+        
     module: {
         rules:[
             {
                 test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
                 use: {
-                    loader: "babel-loader"
-                }
+                    loader: "babel-loader",
+                },
             },
             {
                 test: /\.(scss|css)$/,
-                use: ["style-loader","css-loader", 'sass-loader']
+                use: [
+                    devMode ? "style-loader" : MiniCssExtractPlugin.loader,
+                    "css-loader", 
+                    'sass-loader']
             },
             {
                 test:/\.(webp)$/,
@@ -70,5 +81,11 @@ module.exports={
                 use: ['@svgr/webpack']
             }
         ]
+    },
+    resolve:{
+        extensions: ['.js', '.jsx'],
+        alias:{
+            '@': path.resolve(__dirname, 'src')
+        }
     }
 }

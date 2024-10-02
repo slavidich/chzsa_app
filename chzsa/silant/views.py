@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth.models import User, AnonymousUser, Group
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -9,6 +10,9 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+import secrets
+import string
+from .tasks import testcelery
 from .serializers import DirectorySerializer, UserSerializer
 from .models import *
 
@@ -42,6 +46,23 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token)
     }
+
+def generate_random_password(length=8):
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for i in range(length))
+def update_user_password(user):
+    new_password = generate_random_password()
+    user.set_password(new_password)
+    user.save()
+    return new_password
+def send_password_via_email(user, new_password):
+    subject = 'Обновление пароля'
+    message = f'Вы запросили обновление пароля, {user.username} \n' \
+              f'Ваш новый пароль: {new_password}'
+    send_mail(subject, message, 'from@example.com', [user.email])
+def reset_and_send_new_password(user):
+    new_password = update_user_password(user)
+    send_password_via_email(user, new_password)
 
 @api_view(['POST'])
 def refreshtokens(request):
@@ -193,3 +214,28 @@ def users(request):
     allusers = User.objects.filter(groups__name__in=target_groups)
     serializer = UserSerializer(allusers, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def create_user(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check != 'Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+    data = request.data
+    firstName = data.get('firstName')
+    lastName = data.get('lastName')
+    email = data.get('email')
+    type = data.get('userType')
+    if type=='client':
+        print('client')
+        lastuser=User.objects.filter(username__contains='client').order_by('id').last()
+        lastusernumber = lastuser.username.replace('client','')
+        user = User.objects.create(username=f'client{int(lastusernumber)+1}', first_name=firstName, last_name=lastName, email=email)
+        client_group= Group.objects.get(name='Клиент')
+        user.groups.add(client_group)
+        testcelery.delay()
+        #reset_and_send_new_password(user)
+    elif type=='service':
+        print('service')
+    return Response('', status=status.HTTP_201_CREATED)

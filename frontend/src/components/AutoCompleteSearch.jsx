@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef  } from 'react';
 import axios from 'axios';
-import {refreshTokenIfNeeded} from './authUtils'
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { ThemeProvider } from '@emotion/react';
-import { theme } from './app.jsx';
+import { theme } from './muiUtil';
 
 function AutoCompleteSearch({endpoint, label, name, setData, setFormError}){
     const [options, setOptions] = useState([]);
