@@ -131,6 +131,15 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ПОЧТА
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # для тестов в консоль!!!
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = "fomenko@yandex.ru"
+EMAIL_HOST_PASSWORD = "asdasdasdasdasd"
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+DEFAULT_FROM_EMAIL = "fomenko@yandex.ru"
 
 # CORS настройки (можете уточнить по безопасности)
 CORS_ALLOW_CREDENTIALS = True
@@ -148,7 +157,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -162,8 +171,6 @@ SIMPLE_JWT = {
     'REFRESH_COOKIE_SAMESITE': 'Lax',
 }
 CSRF_COOKIE_SAMESITE = 'Lax'  # Ограничение передачи только с тем же сайтом
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # CELERY REDIS
 CELERY_BROKER_URL = 'redis://localhost:6379'

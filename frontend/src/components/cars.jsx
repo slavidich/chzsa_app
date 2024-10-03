@@ -3,7 +3,9 @@ import { mainAddress } from "./app.jsx";
 import '../styles/cars.scss'
 import AutoCompleteSearch from './AutoCompleteSearch.jsx'
 import TextField from '@mui/material/TextField';
-
+import { FormControl } from "@mui/material";
+import { ThemeProvider } from '@emotion/react';
+import { theme } from './muiUtil';
 
 function Cars(){
     const [addCar, setAddCar] = useState(false)
@@ -55,26 +57,31 @@ function Cars(){
         console.log(formData)
     };
     return (
+        <ThemeProvider theme={theme}>
         <div className='cars'>
             
             {addCar?
                 <div>
                     <button onClick={()=>setAddCar(false)}>Вернуться</button>
                     <form onSubmit={handleSubmit}>
-                        <TextField 
-                            name="serial_number"
-                            label="Зав. № машины:" 
-                            variant="outlined" 
-                            value={formData.serial_number} 
-                            onChange={handleInputChange} 
-                        />
-                        <AutoCompleteSearch
-                            label="Модель двигателя"
-                            name="technique_model"
-                            endpoint={`${mainAddress}/api/searchdirectories?entity_name=TECHNIQUE_MODEL`}
-                            setData={setFormData}
-                            setFormError={setErrors}
-                        />
+                        <FormControl fullWidth margin="normal">
+                            <TextField 
+                                name="serial_number"
+                                label="Зав. № машины:" 
+                                variant="outlined" 
+                                value={formData.serial_number} 
+                                onChange={handleInputChange} 
+                            />
+                        </FormControl>
+                        <FormControl fullWidth margin="normal">
+                            <AutoCompleteSearch
+                                label="Модель двигателя"
+                                name="technique_model"
+                                endpoint={`${mainAddress}/api/searchdirectories?entity_name=TECHNIQUE_MODEL`}
+                                setData={setFormData}
+                                setFormError={setErrors}
+                            />
+                        </FormControl>
                         <button type="submit" onClick={handleSubmit}>Добавить</button>
                     </form>
                 </div>
@@ -84,6 +91,7 @@ function Cars(){
                     Страница просмотра машин
                 </div>}
         </div>
+        </ThemeProvider>
     )
 }
 

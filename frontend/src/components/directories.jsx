@@ -5,6 +5,8 @@ import { useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
 import {mainAddress} from './app.jsx'
 import {refreshTokenIfNeeded} from './authUtils'
+//import Pagination from "./pagination.jsx";
+import Pagination from '@mui/material/Pagination';
 
 const directorieslist = [
     ['TECHNIQUE_MODEL', 'Модель техники'],
@@ -50,7 +52,7 @@ function Directories(){
         getDirectroies(activeType, currentPage)
     }, [activeType, currentPage])
 
-    const handlePageChange = (page) => {
+    const handlePageChange = (e, page) => {
         setCurrentPage(page);
     };
     const handleEdit = (item) => {
@@ -100,8 +102,8 @@ function Directories(){
                 ))}
             </div>
         <div className='list'>
-            {loading?<div className='e404'>Загрузка</div>:
-                <>
+            {loading?<div className='directories'>Загрузка</div>:
+                <div className='directories'>
                     {directories.length ? (
                     <ul>
                         {directories.map((directory) => (
@@ -115,9 +117,13 @@ function Directories(){
                     ) : (
                         <p>Данных нет</p>
                     )}
-                </>}
+                </div>}
             
             <button onClick={() => { setNewDirectory({ name: '', description: 'Вышла из строя ' }); setShowModal(true);}}>Добавить новый элемент</button>  
+            {/* Кнопки пагинации */}
+            <div className="pagination">
+                <Pagination count={totalPages} page={currentPage} onChange={handlePageChange}></Pagination>
+            </div>
         </div>       
         
         {/* мод окно */ }
@@ -141,10 +147,7 @@ function Directories(){
             </div>
         )}
 
-        {/* Кнопки пагинации */}
-        <div className="pagination">
-            
-        </div>
+        
         
     </div>)
 }

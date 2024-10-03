@@ -10,9 +10,9 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-import secrets
-import string
-from .tasks import testcelery
+from django.db import transaction
+
+from .tasks import sendEmailResetPassword
 from .serializers import DirectorySerializer, UserSerializer
 from .models import *
 
@@ -47,22 +47,6 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token)
     }
 
-def generate_random_password(length=8):
-    characters = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(characters) for i in range(length))
-def update_user_password(user):
-    new_password = generate_random_password()
-    user.set_password(new_password)
-    user.save()
-    return new_password
-def send_password_via_email(user, new_password):
-    subject = 'Обновление пароля'
-    message = f'Вы запросили обновление пароля, {user.username} \n' \
-              f'Ваш новый пароль: {new_password}'
-    send_mail(subject, message, 'from@example.com', [user.email])
-def reset_and_send_new_password(user):
-    new_password = update_user_password(user)
-    send_password_via_email(user, new_password)
 
 @api_view(['POST'])
 def refreshtokens(request):
@@ -229,13 +213,24 @@ def create_user(request):
     type = data.get('userType')
     if type=='client':
         print('client')
-        lastuser=User.objects.filter(username__contains='client').order_by('id').last()
+        lastuser=User.objects.filter(username__startswith='client').order_by('id').last()
         lastusernumber = lastuser.username.replace('client','')
         user = User.objects.create(username=f'client{int(lastusernumber)+1}', first_name=firstName, last_name=lastName, email=email)
         client_group= Group.objects.get(name='Клиент')
         user.groups.add(client_group)
-        testcelery.delay()
-        #reset_and_send_new_password(user)
+        sendEmailResetPassword.delay(user.username, user.email, isRegistration=True)  # celery таска !!!
     elif type=='service':
-        print('service')
+        lastservice = User.objects.filter(username__startswith='service').order_by('id').last()
+        if lastservice:
+            lastservicenumber = lastservice.username.replace('service', '')
+            user = User.objects.create(username=f'service{int(lastservicenumber) + 1}', first_name=firstName,
+                                       last_name=lastName, email=email)
+        else:
+            user = User.objects.create(username=f'service1', first_name=firstName,
+                                       last_name=lastName, email=email)
+        sendEmailResetPassword.delay(user.username, user.email, isRegistration=True)  # celery таска !!!
+        service_group = Group.objects.get(name='Сервисная организация')
+        user.groups.add(service_group)
+        Service.objects.create(name=data.get('organization'), description=data.get('description'),
+                               user=user)
     return Response('', status=status.HTTP_201_CREATED)

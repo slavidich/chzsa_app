@@ -15,16 +15,18 @@ function Users(){
     const [users, setUsers] = useState([])
     const [isLoading, setIsLoading]=useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [modalButtonLoading, setModalButtonLoading] = useState(false)
     const [formData, setFormData] = useState({
         userType: 'client',
         organization:'',
+        description:'',
         firstName: '',
         lastName: '',
         email: ''
     });
     const [errors, setErrors] = useState({
         firstName: false,
-        organization:false,
+        description:false,
         lastName: false,
         email: false
     });
@@ -42,6 +44,13 @@ function Users(){
         } finally{
             setIsLoading(false)
         }   
+    }
+    const clearFormData = ()=>{
+        for (let key in formData){
+            formData[key]=''
+        }
+        formData['userType']='client'
+        
     }
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -92,6 +101,8 @@ function Users(){
             {
                 withCredentials:true,
             })
+            setShowModal(false)
+            await fetchUsers()
         }catch(error){
             console.log(error)
         }
@@ -123,7 +134,7 @@ function Users(){
             {showModal && 
                 <div className="modal-overlay">
                     <form className="modelwindow" onSubmit={handleSubmit}>
-                        <div className="headermodal"><h2>Добавление пользователя</h2><CloseIcon style={{ cursor: 'pointer' }}  onClick={()=>setShowModal(false)}/></div>
+                        <div className="headermodal"><h2>Добавление пользователя</h2><CloseIcon style={{ cursor: 'pointer' }}  onClick={()=>{setShowModal(false); clearFormData()}}/></div>
                         <FormControl component="fieldset">
                             <FormLabel component="legend">Тип пользователя</FormLabel>
                             <RadioGroup
@@ -137,7 +148,7 @@ function Users(){
                                 <FormControlLabel value="service" control={<Radio />} label="Сервисная организация" />
                             </RadioGroup>
                         </FormControl>
-                        {formData.userType==='service'&&(
+                        {formData.userType==='service'&&(<>
                             <FormControl fullWidth margin="normal">
                                 <TextField
                                     id='organization'
@@ -151,6 +162,16 @@ function Users(){
                                     required
                                 />
                             </FormControl>
+                            <FormControl fullWidth margin="normal">
+                                <TextField
+                                    id='description'
+                                    label='Описание'
+                                    variant='outlined'
+                                    name='description'
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                />
+                            </FormControl></>
                         )}
                         <FormControl fullWidth margin="normal">
                             <TextField
