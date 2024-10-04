@@ -47,6 +47,23 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token)
     }
 
+def paginate_queryset(model, request, serializer_class, sort_field=id, **filter_params):
+    page_size = request.query_params.get('page_size', 10)
+    paginator = PageNumberPagination()
+    paginator.page_size = page_size
+
+    sort_order  = request.query_params.get('sortOrder', 'asc')
+
+    if sort_order == 'desc':
+        sort_field = f'-{sort_field}'
+
+    queryset = model.objects.all()
+    if filter_params:
+        queryset = queryset.filter(**filter_params)
+    queryset = queryset.order_by(sort_field)
+    result_page = paginator.paginate_queryset(queryset, request)
+    serializer = serializer_class(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 @api_view(['POST'])
 def refreshtokens(request):
@@ -142,7 +159,7 @@ def directories(request):
         else:
             directories = Directory.objects.all()
         paginator = PageNumberPagination()
-        paginator.page_size = 2
+        paginator.page_size = 10
         result_page = paginator.paginate_queryset(directories, request)
         serializer = DirectorySerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -187,17 +204,19 @@ def searchdirectories(request):
     serializer = DirectorySerializer(directory_items, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@api_view(['GET']) # все для настройки пользователей итд !!!
+@api_view(['GET']) # получение списка пользователей
 def users(request):
     role_check = get_role_from_request(request)
     if isinstance(role_check, Response):
         return role_check
     if role_check != 'Менеджер':
         return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+
     target_groups = ['Клиент', 'Сервисная организация']
-    allusers = User.objects.filter(groups__name__in=target_groups)
-    serializer = UserSerializer(allusers, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    sort_field = request.query_params.get('sortField', 'id')
+    if sort_field=='group':
+        sort_field='groups__name'
+    return paginate_queryset(User, request, UserSerializer, sort_field=sort_field, groups__name__in=target_groups)
 
 @api_view(['POST'])
 def create_user(request):

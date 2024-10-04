@@ -3,10 +3,11 @@ import '../styles/directories.scss'
 import axios from 'axios';
 import { useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
-import {mainAddress} from './app.jsx'
+import {mainAddress, pagination_page} from './app.jsx'
 import {refreshTokenIfNeeded} from './authUtils'
-//import Pagination from "./pagination.jsx";
-import Pagination from '@mui/material/Pagination';
+import MyPagination from './paginations.jsx'
+import UniversalTable from "./dataTable.jsx";
+
 
 const directorieslist = [
     ['TECHNIQUE_MODEL', 'Модель техники'],
@@ -18,43 +19,16 @@ const directorieslist = [
     ['FAILURE_NODE', 'Узел отказа'],
     ['RECOVERY_METHOD', 'Способ восстановления'],
 ]
-const pagination = 2
 
 function Directories(){
     const dispatch = useDispatch();
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(false)
-    const [directories, setDirectories] = useState([])
+
     const [activeType, setActiveType] = useState(directorieslist[0][0]); // первый тип активный
     const [showModal, setShowModal] = useState(false); // модальное окно
     const [newDirectory, setNewDirectory] = useState({ name: '', description: '' }); // новая запись
     const [isEditing, setIsEditing] = useState(false); // если редактируем какой то элемент 
     const [selectedItem, setSelectedItem] = useState(null); // Для хранения элемента, который редактируется
-    const [currentPage, setCurrentPage] = useState(1); // Текущая страница
-    const [totalPages, setTotalPages] = useState(1); // Общее количество страниц
 
-    const getDirectroies = async(type, page=1)=>{
-        setLoading(true);
-        try{
-            await refreshTokenIfNeeded(dispatch)
-            const response = await axios.get(`${mainAddress}/api/directories?entity_name=${type}&page=${page}`, {withCredentials: true})
-            setDirectories(response.data.results);
-            setTotalPages(Math.ceil(response.data.count / pagination));
-        }
-        catch (error){
-            if (error.response && error.response.status===403){
-                return <Navigate to="/forbidden" replace />;
-            }
-        }
-        setLoading(false)
-    }
-    React.useEffect(()=>{
-        getDirectroies(activeType, currentPage)
-    }, [activeType, currentPage])
-
-    const handlePageChange = (e, page) => {
-        setCurrentPage(page);
-    };
     const handleEdit = (item) => {
         console.log(item)
         setSelectedItem(item);
@@ -78,52 +52,30 @@ function Directories(){
             console.error(error);
         }
     };
-    const handleDelete = async(directory)=>{
-        let reply = window.confirm(`Вы действительно хотите удалить "${directory.name}?"`)
-        if (reply){
-            try{
-                await refreshTokenIfNeeded(dispatch)
-                await axios.delete(`${mainAddress}/api/directories?id=${directory.id}`, {withCredentials:true}) 
-                getDirectroies()
-            } catch(error){
-                console.error(error)
-            }
-        }
-    }
-
     
     return(
         <div className='directories'>
             <div className='types'>
                 {directorieslist.map(([key, label]) => (
-                <p key={key} onClick={() => { setActiveType(key); setCurrentPage(1); }} className={activeType === key ? 'active' : ''}>
+                <p key={key} onClick={() => { setActiveType(key);}} className={activeType === key ? 'active' : ''}>
                     {label}
                 </p>
                 ))}
             </div>
+        
         <div className='list'>
-            {loading?<div className='directories'>Загрузка</div>:
-                <div className='directories'>
-                    {directories.length ? (
-                    <ul>
-                        {directories.map((directory) => (
-                        <li key={directory.id}>
-                            {directory.name}
-                            <button onClick={() => handleEdit(directory)}>Редактировать</button>
-                            <button onClick={() => handleDelete(directory)}>Удалить</button>
-                        </li>
-                        ))}
-                    </ul>
-                    ) : (
-                        <p>Данных нет</p>
-                    )}
-                </div>}
-            
-            <button onClick={() => { setNewDirectory({ name: '', description: 'Вышла из строя ' }); setShowModal(true);}}>Добавить новый элемент</button>  
-            {/* Кнопки пагинации */}
-            <div className="pagination">
-                <Pagination count={totalPages} page={currentPage} onChange={handlePageChange}></Pagination>
-            </div>
+            <UniversalTable
+                columns={[
+                    {field: "id", header: "ID"},
+                    {field: "name", header: "Название"},
+                    {field: "description", header: "Описание"},
+                ]}
+                params={{
+                    entity_name: activeType
+                }}
+                path='/api/directories'
+                dispatch={dispatch}
+            />
         </div>       
         
         {/* мод окно */ }
@@ -149,6 +101,7 @@ function Directories(){
 
         
         
-    </div>)
+    </div>
+    )
 }
 export default Directories

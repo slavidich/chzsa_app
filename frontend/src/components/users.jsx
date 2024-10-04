@@ -7,13 +7,14 @@ import { refreshTokenIfNeeded } from "./authUtils.js";
 import { Navigate } from "react-router-dom";
 import { TextField, Button, FormControl, FormLabel, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { ThemeProvider } from '@emotion/react';
-import { theme } from './muiUtil';
+
+import MyPagination from './paginations.jsx'
+import {pagination_page} from './app.jsx'
+import { getData } from "./dataTable.jsx";
+import UniversalTable from "./dataTable.jsx";
 
 function Users(){
     const dispatch = useDispatch();
-    const [users, setUsers] = useState([])
-    const [isLoading, setIsLoading]=useState(true)
     const [showModal, setShowModal] = useState(false)
     const [modalButtonLoading, setModalButtonLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -31,20 +32,7 @@ function Users(){
         email: false
     });
 
-    const fetchUsers = async()=>{
-        setIsLoading(true)
-        try{
-            await refreshTokenIfNeeded(dispatch)
-            const response = await axios.get(`${mainAddress}/api/users`, {withCredentials:true})
-            setUsers(response.data)
-        } catch(error){
-            if (error.response && error.response.status===403){
-                return <Navigate to="/forbidden" replace />;
-            }    
-        } finally{
-            setIsLoading(false)
-        }   
-    }
+    
     const clearFormData = ()=>{
         for (let key in formData){
             formData[key]=''
@@ -109,28 +97,27 @@ function Users(){
         
 
     }
-    useEffect(()=>{
-        fetchUsers()
-    },[])
+    
     return(
-        <ThemeProvider theme={theme}>
+        
         <div className="users">
             <div>
                 <button onClick={()=>setShowModal(true)}>
                     Добавить пользователя
                 </button>
             </div>
-            {isLoading?
-                <>Загрузка</>
-            :
-                <div>
-                    {users.map((item, index)=>{
-                        return  <div key={index}>
-                                    {item.group} {item.username} {item.first_name} {item.last_name} {item.email}
-                                </div>
-                    })}
-                </div>
-            }
+            <UniversalTable
+                columns={[
+                    {field: "id", header: "ID"},
+                    {field: "group", header: "Тип"},
+                    {field: "username", header: "username"},
+                    {field: "first_name", header: "Имя"},
+                    {field: "last_name", header: "Фамилия"},
+                    {field: "email", header: "Email"},
+                ]}
+                path='/api/users'
+                dispatch={dispatch}
+            />
             {showModal && 
                 <div className="modal-overlay">
                     <form className="modelwindow" onSubmit={handleSubmit}>
@@ -224,7 +211,7 @@ function Users(){
                 </div>
             }
         </div>
-        </ThemeProvider>
+        
     )
 }
 

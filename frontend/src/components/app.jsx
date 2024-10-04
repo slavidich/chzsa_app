@@ -15,8 +15,8 @@ const Cars = React.lazy(()=>import('./cars.jsx'))
 const Users = React.lazy(()=>import('./users.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
-export const accessLifeTime = 10*1000*60
-
+export const accessLifeTime = 5*1000*60
+export const pagination_page = 10
 
 function App() {
     const dispatch = useDispatch();
