@@ -11,6 +11,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.db import transaction
+from django.db.models import Q
 
 from .tasks import sendEmailResetPassword
 from .serializers import DirectorySerializer, UserSerializer
@@ -47,12 +48,14 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token)
     }
 
-def paginate_queryset(model, request, serializer_class, sort_field=id, **filter_params):
+def paginate_queryset(model, request, serializer_class, sort_field='id', **filter_params):
     page_size = request.query_params.get('page_size', 10)
     paginator = PageNumberPagination()
     paginator.page_size = page_size
 
     sort_order  = request.query_params.get('sortOrder', 'asc')
+    search_field = request.query_params.get('searchField', None)
+    search_value = request.query_params.get('searchValue', None)
 
     if sort_order == 'desc':
         sort_field = f'-{sort_field}'
@@ -60,6 +63,11 @@ def paginate_queryset(model, request, serializer_class, sort_field=id, **filter_
     queryset = model.objects.all()
     if filter_params:
         queryset = queryset.filter(**filter_params)
+
+    if search_field and search_value:
+        search_filter = {f"{search_field}__icontains": search_value}
+        queryset = queryset.filter(Q(**search_filter))
+
     queryset = queryset.order_by(sort_field)
     result_page = paginator.paginate_queryset(queryset, request)
     serializer = serializer_class(result_page, many=True)
@@ -158,6 +166,8 @@ def directories(request):
             directories = Directory.objects.filter(entity_name=entity_name)
         else:
             directories = Directory.objects.all()
+        return paginate_queryset(Directory, request, DirectorySerializer, entity_name=entity_name)
+        #
         paginator = PageNumberPagination()
         paginator.page_size = 10
         result_page = paginator.paginate_queryset(directories, request)

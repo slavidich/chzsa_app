@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import { refreshTokenIfNeeded } from "./authUtils.js";
 import { Navigate } from "react-router-dom";
 import { TextField, Button, FormControl, FormLabel, FormControlLabel, Radio, RadioGroup } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+
 
 import MyPagination from './paginations.jsx'
 import {pagination_page} from './app.jsx'
@@ -97,14 +97,15 @@ function Users(){
         
 
     }
-    
+    const ShowModalChange = (item)=>{
+        console.log(item)
+        setShowModal(true)
+    }
     return(
         
         <div className="users">
             <div>
-                <button onClick={()=>setShowModal(true)}>
-                    Добавить пользователя
-                </button>
+                
             </div>
             <UniversalTable
                 columns={[
@@ -117,11 +118,16 @@ function Users(){
                 ]}
                 path='/api/users'
                 dispatch={dispatch}
+                canAdd={true}
+                actionOnAdd={ShowModalChange}
+                canSearch={true}
+                canChange={true}
+                actionOnChange={ShowModalChange}
             />
             {showModal && 
                 <div className="modal-overlay">
                     <form className="modelwindow" onSubmit={handleSubmit}>
-                        <div className="headermodal"><h2>Добавление пользователя</h2><CloseIcon style={{ cursor: 'pointer' }}  onClick={()=>{setShowModal(false); clearFormData()}}/></div>
+                        
                         <FormControl component="fieldset">
                             <FormLabel component="legend">Тип пользователя</FormLabel>
                             <RadioGroup

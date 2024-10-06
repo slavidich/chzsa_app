@@ -1,0 +1,19 @@
+.table{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    .searchdiv{
+        width:100%;
+        padding: 16px;
+        display: flex;
+        gap: 16px;
+        justify-content: flex-end;
+    }
+    .addButton {
+        padding: 16px;
+        display: flex;
+        gap: 16px;
+
+    }
+        
+}

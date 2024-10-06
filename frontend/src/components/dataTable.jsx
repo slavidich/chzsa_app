@@ -3,20 +3,12 @@ import { Navigate } from 'react-router-dom';
 import { refreshTokenIfNeeded } from './authUtils'; // 
 import { mainAddress } from './app.jsx'; 
 import axios from "axios";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    TablePagination,
-    TableSortLabel,
-    CircularProgress,
-  } from '@mui/material';
-import { ThemeProvider } from '@emotion/react';
+import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider } from '@mui/material';
+import "../styles/dataTable.scss"
 import { theme } from './muiUtil';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 export const getData = async({path, params, dispatch, setLoading, setData, setTotalPages, setTotalCount, page_size})=>{
     setLoading(true);
@@ -36,20 +28,27 @@ export const getData = async({path, params, dispatch, setLoading, setData, setTo
         if (error.response && error.response.status === 403) {
             return <Navigate to="/forbidden" replace />;
         }
+        setData([])
     }finally{
         setLoading(false)
     }
 }
 
-function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
+function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc', refreshKey=null,
+                        canAdd=false, actionOnAdd=undefined, 
+                        canSearch=false, 
+                        canDelete = false, actionOnDelete=undefined,
+                        canChange = false, actionOnChange=undefined}){
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(pageSize);
-    const [sortField, setSortField] = useState('');
-    const [sortOrder, setSortOrder] = useState('asc');
+    const [sortField, setSortField] = useState(defaultSortField);
+    const [sortOrder, setSortOrder] = useState(defaultSortOrder);
+    const [searchField, setSearchField] = useState('');
+    const [searchValue, setSearchValue] = useState('');
 
     const fetchData = async () => {
         await getData({
@@ -58,7 +57,9 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
                 ...params,
                 page:page+1,
                 sortField: sortField===''? undefined: sortField,
-                sortOrder: sortOrder==='asc'? undefined: sortOrder
+                sortOrder: sortOrder==='asc'? undefined: sortOrder,
+                searchField: searchField === '' ? undefined : searchField,
+                searchValue: searchValue === '' ? undefined : searchValue,
             },
             dispatch: dispatch,
             setLoading: setLoading,
@@ -70,8 +71,9 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
     };
 
     useEffect(() => {
+        //console.log(types)
         fetchData();
-    }, [page, rowsPerPage, sortField, sortOrder, params]);
+    }, [page, rowsPerPage, sortField, sortOrder, params, searchField, refreshKey]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -87,9 +89,59 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
         setSortOrder(isAsc ? 'desc' : 'asc');
         setSortField(field);
     };
+    const handleSearch = () => {
+        setPage(0);  // При новом поиске возвращаемся на первую страницу
+        fetchData();
+    };
+    const handleSearchCancel = async ()=>{
+        setPage(0);
+        setSearchValue('')
+        setSearchField('')
+    }
 
     return(<ThemeProvider theme={theme}>
         <Paper>
+                {canSearch&&
+                <div className="table">
+                    {canAdd&&<div className="addButton">
+                            <Button variant="contained" color="primary" onClick={actionOnAdd}>
+                                {/*<AddIcon/>*/}
+                                Добавить
+                            </Button>
+                        </div>}
+                    <div className="searchdiv">
+                        
+                        <Select
+                            value={searchField}
+                            onChange={(e) => setSearchField(e.target.value)}
+                            displayEmpty
+                        >
+                            <MenuItem value="" disabled>
+                                Выберите поле для поиска
+                            </MenuItem>
+                            {columns.map((column) => (
+                                <MenuItem key={column.field} value={column.field}>
+                                    {column.header}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        <TextField
+                            label="Поиск"
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            disabled={searchField===''? true:false}
+                        />
+                        <Button variant="contained" onClick={handleSearch} disabled={searchValue!=''?false:true}>
+                            Искать
+                        </Button>
+                        <Button variant="contained" onClick={handleSearchCancel} disabled={searchValue!=''?false:true}>
+                            Сбросить
+                        </Button>
+                        
+                    </div>
+                    
+                </div>}    
+               
             <TableContainer>
                 <Table>
                     <TableHead>
@@ -107,8 +159,11 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
                                         {column.header}
                                     </TableSortLabel>
                                 </TableCell>
+                                
                             ))}
+                            {(canDelete || canChange) && <TableCell>Действия</TableCell>}
                         </TableRow>
+                        
                     </TableHead>
                     <TableBody>
                         {loading ? (
@@ -120,12 +175,20 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10}){
                         ) : (
                             data.map((row, index) => (
                                 <TableRow key={index}>
-                                {columns.map((column) => (
-                                    <TableCell key={column.field}>{row[column.field]}</TableCell>
-                                ))}
+                                    {columns.map((column) => (
+                                        <TableCell key={column.field}>{row[column.field]}</TableCell>
+                                    ))}
+                                {(canDelete || canChange ) && (
+                                        <TableCell>
+                                            
+                                            {canChange && <Button variant="contained" onClick={()=>actionOnChange(row)}><EditIcon/></Button>}
+                                            {canDelete && <Button variant="outlined" color="error"><DeleteForeverIcon/></Button>}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))
                         )}
+                        
                     </TableBody>
                 </Table>
             </TableContainer>

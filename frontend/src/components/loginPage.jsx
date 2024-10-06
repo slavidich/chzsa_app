@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
-import {mainAddress} from './app.jsx'
+import {mainAddress, accessLifeTime} from './app.jsx'
 
 function LoginPage (){
     const dispatch = useDispatch();
@@ -27,6 +27,7 @@ function LoginPage (){
             })
             const data = response.data
             dispatch(loginSuccess({username: data.username, role:data.role}))
+            localStorage.setItem('accessTokenExpiration', Date.now() + accessLifeTime);
             navigate('/')
         }
         catch(respError){
