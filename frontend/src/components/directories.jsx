@@ -112,68 +112,68 @@ function Directories(){
                 ))}
             </div>
         
-        <div className='list'>
-            <UniversalTable
-                columns={[
-                    {field: "id", header: "ID"},
-                    {field: "name", header: "Название"},
-                    {field: "description", header: "Описание"},
-                ]}
-                params={memoizedParams}
-                path='/api/directories'
-                dispatch={dispatch}
-                canAdd={true}
-                actionOnAdd={handleAdd}
-                canSearch={true}
-                canChange={true}
-                actionOnChange={handleEdit}
-                refreshKey={refreshKey}
-            />
-        </div>
-        <ModalWindow headerText={isEditing ? 'Редактировать элемент' : 'Добавить новый элемент'} showModal={showModal} closeModal={closeModal}>
-            <form onSubmit={handleAddOrEdit}>
-                <FormControl fullWidth margin="normal">
-                    <TextField
-                        id='name'
-                        label='Название'
-                        variant='outlined'
-                        name='name'
-                        value={newDirectory.name}
-                        onChange={handleChange}
-                        error={formError.name}
-                        helperText={formError.name && "Поле не может быть пустым"}
-                        disabled={formLoading}
-                        required
-                    />
-                </FormControl>
-                <FormControl fullWidth margin="normal">
-                    <TextField
-                        multiline
-                        rows={4}
-                        id='description'
-                        label='Описание'
-                        variant='outlined'
-                        name='description'
-                        value={newDirectory.description}
-                        onChange={handleChange}
-                        disabled={formLoading}
-                        error={formError.description}
-                        helperText={formError.description && "Поле не может быть пустым"}
-                        required
-                    />
-                </FormControl>
-                <div className="formButtons">
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={!isValid()||formLoading} >
-                        {formLoading?<CircularProgress  />:<>{isEditing?"Сохранить":"Добавить"}</>}
-                    </Button>
-                    
-                </div>
-            </form>
-        </ModalWindow>
+            <div className='list'>
+                <UniversalTable
+                    columns={[
+                        {field: "id", header: "ID"},
+                        {field: "name", header: "Название"},
+                        {field: "description", header: "Описание"},
+                    ]}
+                    params={memoizedParams}
+                    path='/api/directories'
+                    dispatch={dispatch}
+                    canAdd={true}
+                    actionOnAdd={handleAdd}
+                    canSearch={true}
+                    canChange={true}
+                    actionOnChange={handleEdit}
+                    refreshKey={refreshKey}
+                />
+            </div>
+            <ModalWindow headerText={isEditing ? 'Редактировать элемент' : 'Добавить новый элемент'} showModal={showModal} closeModal={closeModal}>
+                <form onSubmit={handleAddOrEdit}>
+                    <FormControl fullWidth margin="normal">
+                        <TextField
+                            id='name'
+                            label='Название'
+                            variant='outlined'
+                            name='name'
+                            value={newDirectory.name}
+                            onChange={handleChange}
+                            error={formError.name}
+                            helperText={formError.name && "Поле не может быть пустым"}
+                            disabled={formLoading}
+                            required
+                        />
+                    </FormControl>
+                    <FormControl fullWidth margin="normal">
+                        <TextField
+                            multiline
+                            rows={4}
+                            id='description'
+                            label='Описание'
+                            variant='outlined'
+                            name='description'
+                            value={newDirectory.description}
+                            onChange={handleChange}
+                            disabled={formLoading}
+                            error={formError.description}
+                            helperText={formError.description && "Поле не может быть пустым"}
+                            required
+                        />
+                    </FormControl>
+                    <div className="formButtons">
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={!isValid()||formLoading} >
+                            {formLoading?<CircularProgress  />:<>{isEditing?"Сохранить":"Добавить"}</>}
+                        </Button>
+                        
+                    </div>
+                </form>
+            </ModalWindow>
     </div>
     )
 }

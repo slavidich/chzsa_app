@@ -6,9 +6,13 @@ import axios from "axios";
 import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider } from '@mui/material';
 import "../styles/dataTable.scss"
 import { theme } from './muiUtil';
-import AddIcon from '@mui/icons-material/Add';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ModalWindow from "./ModalWindow.jsx";
+import DialogContent from "@mui/material/DialogContent";
 
 export const getData = async({path, params, dispatch, setLoading, setData, setTotalPages, setTotalCount, page_size})=>{
     setLoading(true);
@@ -49,7 +53,17 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     const [sortOrder, setSortOrder] = useState(defaultSortOrder);
     const [searchField, setSearchField] = useState('');
     const [searchValue, setSearchValue] = useState('');
-
+    const [showModal, setShowModal] = useState(false)
+    const [showingItem, setShowingItem] = useState({})
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const fetchData = async () => {
         await getData({
             path: path,
@@ -149,6 +163,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             {columns.map((column) => (
                                 <TableCell
                                     key={column.field}
+                                    className={windowWidth <= column.hideWhenWidth ? 'hidden-column' : ''}
                                     sortDirection={sortField === column.field ? sortOrder : false}
                                 >
                                     <TableSortLabel
@@ -174,17 +189,25 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             </TableRow>
                         ) : (
                             data.map((row, index) => (
-                                <TableRow key={index}>
+                                <TableRow 
+                                    key={index}
+                                    style={{ 
+                                        backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', // Чередуем цвета строк
+                                        
+                                      }}
+                                >
                                     {columns.map((column) => (
-                                        <TableCell key={column.field}>{row[column.field]}</TableCell>
+                                        <TableCell key={column.field}
+                                        className={windowWidth <= column.hideWhenWidth ? 'hidden-column' : ''}
+                                        >{row[column.field]}</TableCell>
                                     ))}
-                                {(canDelete || canChange ) && (
+                               
                                         <TableCell>
-                                            
+                                            <Button variant="outlined" onClick={()=> {setShowModal(true); setShowingItem(row)}}><VisibilityIcon/></Button>
                                             {canChange && <Button variant="contained" onClick={()=>actionOnChange(row)}><EditIcon/></Button>}
                                             {canDelete && <Button variant="outlined" color="error"><DeleteForeverIcon/></Button>}
                                         </TableCell>
-                                    )}
+                                    
                                 </TableRow>
                             ))
                         )}
@@ -203,6 +226,18 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
         </Paper>
+        <ModalWindow showModal={showModal} headerText={'Просмотр'} closeModal={()=>{setShowModal(false); }}>
+                    {columns.map((column) => (
+                        <>
+                            <Typography key={column} variant="subtitle1" color="textSecondary">
+                                {column.header}
+                            </Typography>
+                            <Typography variant="body1">
+                                {showingItem ? showingItem[column.field] : '—'}
+                            </Typography>
+                        </>
+                    ))}
+        </ModalWindow>
     </ThemeProvider>
     )
 }

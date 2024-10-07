@@ -2,17 +2,25 @@
 
 .directories{
     display:flex;
-
-    width: 100%;
+    justify-content: center;
+    width:100%;
     max-width: 1440px;
-    
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 2vw 0 0 0 ;
     .types{
         max-width: 260px;
         min-width: 155px;
-        background-color: rgba(234, 234, 234, 0.46);
+        padding: 0 0vw 0 2vw;
+        border-radius: 5%;
+        
         p{
+            border-radius: 15px;
+            
             cursor: pointer;
             margin:0;
+            margin-bottom:15px;
+            background-color: rgba(234, 234, 234, 0.46);
             padding: min(1vh, 9px) min(2vw,26px) min(1vh, 9px) min(2vw,26px);
             &:hover{
                 background-color: rgb(193, 193, 193);
@@ -24,7 +32,7 @@
     }
     .list{
         width:100%;
-        padding: 0 2vw 0 2vw;
+        padding: 0 2vw 0 1vw;
         display:flex;
         flex-direction: column;
         justify-content: space-between;

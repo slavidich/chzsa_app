@@ -15,7 +15,7 @@ html, body {
 main{
     display: flex;
     flex:1;
-   
+    justify-content: center;
     .e404{
         display:flex;
         justify-content: center;
@@ -26,6 +26,9 @@ main{
             color: $second-color
         }
     }
+}
+.hidden-column{
+    display: none !important;
 }
 .modal-overlay {
     position:fixed;
