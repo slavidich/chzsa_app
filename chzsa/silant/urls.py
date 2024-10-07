@@ -10,5 +10,6 @@ urlpatterns = [
     path('api/directories', directories, name='directories'),
     path('api/searchdirectories',searchdirectories, name='searchdirectories' ),
     path('api/users', users, name='users'),
-    path('api/createuser', create_user, name='create_user')
+    path('api/refreshpassword', updatePassword, name='updatePassword'),
+    path('api/services', services, name='services')
 ]

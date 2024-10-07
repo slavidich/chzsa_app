@@ -42,8 +42,6 @@ export const updateAccessToken = async (dispatch) => {
 
 export const refreshTokenIfNeeded = async (dispatch) => {
     const expiration = Number(localStorage.getItem('accessTokenExpiration'));
-    console.log(new Date().toLocaleString())
-    console.log(new Date(expiration))
     if (expiration && Date.now() >= expiration) {
         await updateAccessToken(dispatch);
     }

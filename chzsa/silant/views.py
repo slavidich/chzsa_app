@@ -14,7 +14,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from .tasks import sendEmailResetPassword
-from .serializers import DirectorySerializer, UserSerializer
+from .serializers import DirectorySerializer, UserSerializer, ServiceSerializer
 from .models import *
 
 from chzsa import settings
@@ -162,11 +162,8 @@ def directories(request):
         return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
     if request.method=='GET':
         entity_name = request.query_params.get('entity_name', None)
-        if entity_name:
-            directories = Directory.objects.filter(entity_name=entity_name)
-        else:
-            directories = Directory.objects.all()
-        return paginate_queryset(Directory, request, DirectorySerializer, entity_name=entity_name)
+        sort_field = request.query_params.get('sortField', 'id')
+        return paginate_queryset(Directory, request, DirectorySerializer, sort_field=sort_field, entity_name=entity_name)
         #
         paginator = PageNumberPagination()
         paginator.page_size = 10
@@ -214,19 +211,69 @@ def searchdirectories(request):
     serializer = DirectorySerializer(directory_items, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@api_view(['GET']) # получение списка пользователей
+@api_view(['GET', 'POST', 'PUT']) # api/users
 def users(request):
     role_check = get_role_from_request(request)
     if isinstance(role_check, Response):
         return role_check
     if role_check != 'Менеджер':
         return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+    if request.method == 'GET':
+        target_groups = ['Клиент']
+        sort_field = request.query_params.get('sortField', 'id')
+        return paginate_queryset(User, request, UserSerializer, sort_field=sort_field, groups__name__in=target_groups)
+    elif request.method=='POST':
+        data = request.data
+        firstName = data.get('first_name')
+        lastName = data.get('last_name')
+        email = data.get('email')
+        try:
+            lastuser = User.objects.filter(username__startswith='client').order_by('id').last()
+            lastusernumber = lastuser.username.replace('client', '')
+            user = User.objects.create(username=f'client{int(lastusernumber) + 1}', first_name=firstName,
+                                       last_name=lastName, email=email)
+            client_group = Group.objects.get(name='Клиент')
+            user.groups.add(client_group)
+            sendEmailResetPassword.delay(user.id, isRegistration=True)  # celery таска !!!
+        except:
+            return Response('', status=status.HTTP_400_BAD_REQUEST)
+        return Response('', status=status.HTTP_201_CREATED)
+    elif request.method=='PUT':
+        try:
+            data = request.data
+            username = data.get('username')
+            user = get_object_or_404(User, username=username)
+            serializer = UserSerializer(user, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response('', status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def updatePassword(request):
+    data = request.data
+    userid = data.get('id')
+    sendEmailResetPassword.delay(userid)
+    return Response('', status=status.HTTP_200_OK)
 
-    target_groups = ['Клиент', 'Сервисная организация']
-    sort_field = request.query_params.get('sortField', 'id')
-    if sort_field=='group':
-        sort_field='groups__name'
-    return paginate_queryset(User, request, UserSerializer, sort_field=sort_field, groups__name__in=target_groups)
+@api_view(['GET', 'POST', 'PUT']) # api/users
+def services(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check != 'Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+    if request.method == 'GET':
+        sort_field = request.query_params.get('sortField', 'id')
+        if sort_field == 'username':
+            sort_field = 'user__username'
+        elif sort_field == 'user_first_name':
+            sort_field = 'user__first_name'
+        elif sort_field == 'user_last_name':
+            sort_field = 'user__last_name'
+        elif sort_field == 'user_email':
+            sort_field = 'user__email'
+        return paginate_queryset(Service, request, ServiceSerializer, sort_field=sort_field)
 
 @api_view(['POST'])
 def create_user(request):

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import Directory
+from .models import Directory, Service
 from django.contrib.auth.models import User, Group
 
 class DirectorySerializer(serializers.ModelSerializer):
@@ -10,12 +10,26 @@ class DirectorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
-    group = SerializerMethodField()
-
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'group', 'username']
+        fields = ['id', 'first_name', 'last_name', 'email', 'username']
 
-    def get_group(self, obj):
-        group = obj.groups.first()  # Берём первую группу
-        return group.name if group else None
+
+class ServiceSerializer(serializers.ModelSerializer):
+    user_first_name = serializers.SerializerMethodField()
+    user_last_name = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    class Meta:
+        model = Service
+        fields = ['id', 'name', 'description', 'user_first_name', 'user_last_name', 'user_email', 'username']
+    def get_username(self,obj):
+        return obj.user.username if obj.user else None
+    def get_user_first_name(self, obj):
+        return obj.user.first_name if obj.user else None
+
+    def get_user_last_name(self, obj):
+        return obj.user.last_name if obj.user else None
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else None

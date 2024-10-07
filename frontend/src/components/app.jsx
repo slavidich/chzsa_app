@@ -13,6 +13,7 @@ const MainPage = React.lazy(()=> import('./mainPage.jsx'))
 const Directories = React.lazy(()=>import('./directories.jsx'))
 const Cars = React.lazy(()=>import('./cars.jsx'))
 const Users = React.lazy(()=>import('./users.jsx'))
+const Services = React.lazy(()=>import('./services.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 5*1000*60
@@ -50,6 +51,7 @@ function App() {
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
                     <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>
+                    <Route path="/services" element={<ProtectedRoute requiredRole='Менеджер'><Services/></ProtectedRoute>}/>
                 </Routes>
             </Suspense>
         </main>

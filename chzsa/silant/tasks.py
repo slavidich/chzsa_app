@@ -8,11 +8,13 @@ from django.contrib.auth.models import User
 
 
 @shared_task
-def sendEmailResetPassword(username, toEmail, isRegistration=False):
+def sendEmailResetPassword(userid, isRegistration=False):
     print('началась генерация пароля + его установка')
     characters = string.ascii_letters + string.digits
     new_password = ''.join(secrets.choice(characters) for i in range(8))
-    user = User.objects.get(username=username)
+    user = User.objects.get(id=userid)
+    username = user.username
+    toEmail = user.email
     user.set_password(new_password)
     user.save()
     if isRegistration:

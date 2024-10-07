@@ -4,47 +4,38 @@ import React, {useEffect, useState} from "react";
 import { mainAddress } from "./app.jsx";
 import { useDispatch } from "react-redux";
 import { refreshTokenIfNeeded } from "./authUtils.js";
-import { Navigate } from "react-router-dom";
 import { TextField, Button, FormControl, FormLabel, FormControlLabel, Radio, RadioGroup } from '@mui/material';
-
-
-import MyPagination from './paginations.jsx'
-import {pagination_page} from './app.jsx'
-import { getData } from "./dataTable.jsx";
+import ModalWindow from "./ModalWindow";
 import UniversalTable from "./dataTable.jsx";
+import CircularProgress from '@mui/material/CircularProgress';
 
 function Users(){
     const dispatch = useDispatch();
     const [showModal, setShowModal] = useState(false)
-    const [modalButtonLoading, setModalButtonLoading] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [editingItem, setEditingItem] = useState({})
+    const [refreshKey, setRefreshKey] = useState(false);
+    const [formLoading, setFormLoading] = useState(false)
+    const [refreshPasswordLoading, setRefreshPasswordLoading] = useState(false)
     const [formData, setFormData] = useState({
-        userType: 'client',
-        organization:'',
-        description:'',
-        firstName: '',
-        lastName: '',
+        username:'',
+        first_name: '',
+        last_name: '',
         email: ''
     });
     const [errors, setErrors] = useState({
-        firstName: false,
-        description:false,
-        lastName: false,
+        first_name: false,
+        last_name: false,
         email: false
     });
-
-    
     const clearFormData = ()=>{
         for (let key in formData){
             formData[key]=''
         }
         formData['userType']='client'
-        
     }
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name==='userType'){
-            formData.organization='';
-        }
         setFormData({
             ...formData,
             [name]: value
@@ -60,46 +51,87 @@ function Users(){
         } else {
             isValid = value.trim() !== '';
         }
-
         setErrors({
             ...errors,
             [name]: !isValid
         });
     };
     const isFormValid = () => {
-        const requireInputs = formData.firstName.trim() !== '' &&
-            formData.lastName.trim() !== '' &&
+        const requireInputs = formData.first_name.trim() !== '' &&
+            formData.last_name.trim() !== '' &&
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-        if (formData.userType==='client'){
-            return requireInputs
-        } else{
-            return requireInputs && formData.organization.trim()!==''
-        }
-        
+        return requireInputs
     };
     const handleSubmit = async (e)=>{
         e.preventDefault()
         if (!isFormValid()) return;
         try{
+            setFormLoading(true)
             await refreshTokenIfNeeded(dispatch)
-            const response = await axios.post(`${mainAddress}/api/createuser`,
-            {
-                ...formData
+            if (isEditing){
+                const response = await axios.put(`${mainAddress}/api/users`,
+                {
+                    ...formData
+                },
+                {
+                    withCredentials:true,
+                })
+            }
+            else{
+                const response = await axios.post(`${mainAddress}/api/users`,
+                {
+                    ...formData
+                },
+                {
+                    withCredentials:true,
+                })
+            }
+            setShowModal(false)
+            setRefreshKey(prevstate=>!prevstate)
+            clearFormData()
+            
+        }catch(error){
+            console.log(error)
+        }
+        setFormLoading(false)
+    }
+    const ShowModalAdd = (item)=>{
+        console.log(item)
+        setShowModal(true)
+        
+    }
+    const ShowModalChange = (item)=>{
+        setEditingItem(item)
+        setFormData({
+            username: item.username,
+            first_name: item.first_name,
+            last_name: item.last_name,
+            email: item.email
+        })
+        setIsEditing(true)
+        setShowModal(true)
+    }
+    const closeModal = ()=>{
+        setIsEditing(false)
+        setShowModal(false)
+        clearFormData()
+    }
+    const handleResetPassword = async ()=>{
+        try{
+            setRefreshPasswordLoading(true)
+            await refreshTokenIfNeeded(dispatch)
+            const response = await axios.post(`${mainAddress}/api/refreshpassword`,{
+                id:editingItem.id,
             },
             {
                 withCredentials:true,
             })
-            setShowModal(false)
-            await fetchUsers()
-        }catch(error){
-            console.log(error)
-        }
-        
 
-    }
-    const ShowModalChange = (item)=>{
-        console.log(item)
-        setShowModal(true)
+        } catch (error){
+            console.error(error)
+        }
+        setRefreshPasswordLoading(false)
+        alert('Отправление сообщение на почту пользователя')
     }
     return(
         
@@ -110,7 +142,6 @@ function Users(){
             <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},
-                    {field: "group", header: "Тип"},
                     {field: "username", header: "username"},
                     {field: "first_name", header: "Имя"},
                     {field: "last_name", header: "Фамилия"},
@@ -119,76 +150,55 @@ function Users(){
                 path='/api/users'
                 dispatch={dispatch}
                 canAdd={true}
-                actionOnAdd={ShowModalChange}
+                actionOnAdd={ShowModalAdd}
                 canSearch={true}
                 canChange={true}
                 actionOnChange={ShowModalChange}
+                refreshKey={refreshKey}
             />
-            {showModal && 
-                <div className="modal-overlay">
-                    <form className="modelwindow" onSubmit={handleSubmit}>
-                        
-                        <FormControl component="fieldset">
-                            <FormLabel component="legend">Тип пользователя</FormLabel>
-                            <RadioGroup
-                                aria-label="userType"
-                                name="userType"
-                                defaultValue="client"
-                                value={formData.userType}
+            
+                <ModalWindow showModal={showModal} headerText={isEditing?'Изменение пользователя':'Добавление пользователя'} closeModal={closeModal}>
+                    <form onSubmit={handleSubmit}>
+                        {isEditing&&<FormControl fullWidth margin="normal">
+                            <TextField
+                                id="username"
+                                label='username'
+                                variant="outlined"
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
-                            >
-                                <FormControlLabel value="client" control={<Radio />} label="Клиент" />
-                                <FormControlLabel value="service" control={<Radio />} label="Сервисная организация" />
-                            </RadioGroup>
-                        </FormControl>
-                        {formData.userType==='service'&&(<>
-                            <FormControl fullWidth margin="normal">
-                                <TextField
-                                    id='organization'
-                                    label='Название организации'
-                                    variant='outlined'
-                                    name='organization'
-                                    value={formData.organization}
-                                    onChange={handleChange}
-                                    error={errors.organization}
-                                    helperText={errors.organization && "Организация не может быть пустым"}
-                                    required
-                                />
-                            </FormControl>
-                            <FormControl fullWidth margin="normal">
-                                <TextField
-                                    id='description'
-                                    label='Описание'
-                                    variant='outlined'
-                                    name='description'
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                />
-                            </FormControl></>
-                        )}
+                                error={errors.username}
+                                helperText={errors.username && "Имя не может быть пустым"}
+                                required
+                                disabled
+                            />
+                        </FormControl>}
+                        
                         <FormControl fullWidth margin="normal">
                             <TextField
-                                id="first-name"
-                                label={formData.userType==='client'?"Имя":"Имя директора"}
+                                id="first_name"
+                                label='Имя клиента'
                                 variant="outlined"
-                                name="firstName"
-                                value={formData.firstName}
+                                name="first_name"
+                                value={formData.first_name}
                                 onChange={handleChange}
-                                error={errors.firstName}
-                                helperText={errors.firstName && "Имя не может быть пустым"}
+                                error={errors.first_name}
+                                disabled={formLoading||refreshPasswordLoading} 
+                                helperText={errors.first_name && "Имя не может быть пустым"}
                                 required
                             />
                         </FormControl>
                         <FormControl fullWidth margin="normal">
                             <TextField
-                                id="last-name"
-                                label={formData.userType==='client'?"Фамилия":"Фамилия директора"}
+                                id="last_name"
+                                label="Фамилия клиента"
                                 variant="outlined"
-                                name="lastName"
-                                value={formData.lastName}
+                                name="last_name"
+                                value={formData.last_name}
                                 onChange={handleChange}
-                                error={errors.lastName}
-                                helperText={errors.lastName && "Фамилия не может быть пустой"}
+                                error={errors.last_name}
+                                disabled={formLoading||refreshPasswordLoading} 
+                                helperText={errors.last_name && "Фамилия не может быть пустой"}
                                 required
                             />
                         </FormControl>
@@ -202,20 +212,31 @@ function Users(){
                                 value={formData.email}
                                 onChange={handleChange}
                                 error={errors.email}
+                                disabled={formLoading||refreshPasswordLoading} 
                                 helperText={errors.email && "Введите корректный email"}
                                 required
                             />
                         </FormControl>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            disabled={!isFormValid()} 
-                        >Отправить
-                        </Button>
+                        <div className='formButtons'>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={!isFormValid()||formLoading|| refreshPasswordLoading} 
+                            >{formLoading?<CircularProgress  />:<>{isEditing?"Сохранить":"Добавить"}</>}
+                            </Button>
+                                {isEditing&&<Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleResetPassword}
+                                disabled={editingItem.email!=formData.email||refreshPasswordLoading} 
+                                >
+                                {refreshPasswordLoading?<CircularProgress  />:'Сбросить пароль'}
+                            </Button>}
+                        </div>
                     </form>
-                </div>
-            }
+                </ModalWindow>
+           
         </div>
         
     )

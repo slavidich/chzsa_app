@@ -12,6 +12,10 @@
             display:flex;
             flex-direction: row;
         }
+        .formButtons{
+            display:flex;
+            justify-content: space-between
+        }
     }
 
 }

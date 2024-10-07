@@ -7,6 +7,7 @@ import {mainAddress} from './app.jsx'
 import {refreshTokenIfNeeded} from './authUtils'
 import UniversalTable from "./dataTable.jsx";
 import { FormControl, TextField, Button } from "@mui/material";
+import CircularProgress from '@mui/material/CircularProgress';
 
 const directorieslist = [
     ['TECHNIQUE_MODEL', 'Модель техники'],
@@ -26,6 +27,7 @@ function Directories(){
     const [showModal, setShowModal] = useState(false); // модальное окно
     const [refreshKey, setRefreshKey] = useState(false);
     const [newDirectory, setNewDirectory] = useState({ name: '', description: '' }); // новая запись
+    const [formLoading, setFormLoading] = useState(false)
     const [formError, setFormErrors] = useState({
         name: false,
         description: false,
@@ -72,6 +74,7 @@ function Directories(){
     const handleAddOrEdit = async (e) => {
         e.preventDefault()
         await refreshTokenIfNeeded(dispatch)
+        setFormLoading(true)
         try {
             if (isEditing){
                 await axios.put(`${mainAddress}/api/directories`,{id:selectedItem.id, name:newDirectory.name, description: newDirectory.description }, {withCredentials:true})
@@ -85,6 +88,7 @@ function Directories(){
         } catch (error) {
             console.error(error);
         }
+        setFormLoading(false)
     };
     const isValid = ()=>{
         for (let key in newDirectory){
@@ -102,7 +106,7 @@ function Directories(){
         <div className='directories'>
             <div className='types'>
                 {directorieslist.map(([key, label]) => (
-                <p key={key} onClick={() => { setActiveType(key);}} className={activeType === key ? 'active' : ''}>
+                <p key={key} onClick={() => { setActiveType(key); }} className={activeType === key ? 'active' : ''}>
                     {label}
                 </p>
                 ))}
@@ -138,6 +142,7 @@ function Directories(){
                         onChange={handleChange}
                         error={formError.name}
                         helperText={formError.name && "Поле не может быть пустым"}
+                        disabled={formLoading}
                         required
                     />
                 </FormControl>
@@ -151,18 +156,22 @@ function Directories(){
                         name='description'
                         value={newDirectory.description}
                         onChange={handleChange}
+                        disabled={formLoading}
                         error={formError.description}
                         helperText={formError.description && "Поле не может быть пустым"}
                         required
                     />
                 </FormControl>
-                <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={!isValid()} >
-                    {isEditing?"Сохранить":"Добавить"}
-                </Button>
+                <div className="formButtons">
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        disabled={!isValid()||formLoading} >
+                        {formLoading?<CircularProgress  />:<>{isEditing?"Сохранить":"Добавить"}</>}
+                    </Button>
+                    
+                </div>
             </form>
         </ModalWindow>
     </div>

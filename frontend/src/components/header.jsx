@@ -58,8 +58,11 @@ function Header(){
         </div>
         {isAuth?
             <div className="buttons">
-                {role==='Менеджер'?<Link to='/directories'>Справочники</Link>:<></>}
-                {role==='Менеджер'?<Link to='/users'>Пользователи</Link>:<></>}
+                {role==='Менеджер'?<>
+                    <Link to='/directories'>Справочники</Link>
+                    <Link to='/users'>Клиенты</Link>
+                    <Link to='/services'>Сервисы</Link>
+                    </>:<></>}
                 <Link to='/cars'>Машины</Link>
                 <Link to='/to'>ТО</Link>
                 <Link to='/complaint'>Рекламации</Link>
