@@ -10,10 +10,15 @@ import { Navigate } from "react-router-dom";
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
-const Directories = React.lazy(()=>import('./directories.jsx'))
-const Cars = React.lazy(()=>import('./cars.jsx'))
-const Users = React.lazy(()=>import('./users.jsx'))
-const Services = React.lazy(()=>import('./services.jsx'))
+
+const Directories = React.lazy(()=>import('./directories/directories.jsx'))
+const AddDirectory = React.lazy(()=>import('./directories/AddDirectory.jsx'))
+const CheckDirectory = React.lazy(()=>import('./directories/CheckDirectory.jsx'))
+
+const Cars = React.lazy(()=>import('./cars/cars.jsx'))
+const Users = React.lazy(()=>import('./users/users.jsx'))
+const Services = React.lazy(()=>import('./services/services.jsx'))
+
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 5*1000*60
@@ -48,6 +53,8 @@ function App() {
                     <Route path="/" element={<MainPage/>}></Route>
                     <Route path="/login" element={<LoginPage/>} />
                     <Route path='/directories' element={<ProtectedRoute requiredRole='Менеджер'><Directories/></ProtectedRoute>}/>
+                    <Route path='/directories/new' element={<ProtectedRoute requiredRole='Менеджер'><AddDirectory/></ProtectedRoute>}/>
+                    <Route path='/directories/:id' element={<CheckDirectory></CheckDirectory>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
                     <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>

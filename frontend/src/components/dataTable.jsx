@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { refreshTokenIfNeeded } from './authUtils'; // 
 import { mainAddress } from './app.jsx'; 
 import axios from "axios";
 import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider } from '@mui/material';
 import "../styles/dataTable.scss"
 import { theme } from './muiUtil';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import ModalWindow from "./ModalWindow.jsx";
-import DialogContent from "@mui/material/DialogContent";
+
 
 export const getData = async({path, params, dispatch, setLoading, setData, setTotalPages, setTotalCount, page_size})=>{
     setLoading(true);
@@ -40,9 +34,7 @@ export const getData = async({path, params, dispatch, setLoading, setData, setTo
 
 function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc', refreshKey=null,
                         canAdd=false, actionOnAdd=undefined, 
-                        canSearch=false, 
-                        canDelete = false, actionOnDelete=undefined,
-                        canChange = false, actionOnChange=undefined}){
+                        canSearch=false}){
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
@@ -53,9 +45,8 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     const [sortOrder, setSortOrder] = useState(defaultSortOrder);
     const [searchField, setSearchField] = useState('');
     const [searchValue, setSearchValue] = useState('');
-    const [showModal, setShowModal] = useState(false)
-    const [showingItem, setShowingItem] = useState({})
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const navigate = useNavigate()
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -118,7 +109,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 {canSearch&&
                 <div className="table">
                     {canAdd&&<div className="addButton">
-                            <Button variant="contained" color="primary" onClick={actionOnAdd}>
+                            <Button variant="contained" color="primary" onClick={()=>navigate('new')}>
                                 {/*<AddIcon/>*/}
                                 Добавить
                             </Button>
@@ -131,7 +122,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             displayEmpty
                         >
                             <MenuItem value="" disabled>
-                                Выберите поле для поиска
+                                Поле для поиска
                             </MenuItem>
                             {columns.map((column) => (
                                 <MenuItem key={column.field} value={column.field}>
@@ -176,9 +167,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                                 </TableCell>
                                 
                             ))}
-                            {(canDelete || canChange) && <TableCell>Действия</TableCell>}
                         </TableRow>
-                        
                     </TableHead>
                     <TableBody>
                         {loading ? (
@@ -191,23 +180,23 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             data.map((row, index) => (
                                 <TableRow 
                                     key={index}
+                                    className="table-row-hover"
                                     style={{ 
                                         backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', // Чередуем цвета строк
-                                        
-                                      }}
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={()=>navigate(`${row.id}`)}
+                                    /*onClick={() => window.open(`/path/${row.id}`, '_blank')} */ // это на случай если в новой вкладке будет результативнее открывать все это 
                                 >
                                     {columns.map((column) => (
                                         <TableCell key={column.field}
                                         className={windowWidth <= column.hideWhenWidth ? 'hidden-column' : ''}
-                                        >{row[column.field]}</TableCell>
+                                        
+                                        style={{}}
+                                        >{column.maxLength!=undefined?
+                                            row[column.field].length>column.maxLength?`${row[column.field].slice(0,column.maxLength)}...`:row[column.field]
+                                            :row[column.field]}</TableCell>
                                     ))}
-                               
-                                        <TableCell>
-                                            <Button variant="outlined" onClick={()=> {setShowModal(true); setShowingItem(row)}}><VisibilityIcon/></Button>
-                                            {canChange && <Button variant="contained" onClick={()=>actionOnChange(row)}><EditIcon/></Button>}
-                                            {canDelete && <Button variant="outlined" color="error"><DeleteForeverIcon/></Button>}
-                                        </TableCell>
-                                    
                                 </TableRow>
                             ))
                         )}
@@ -226,18 +215,6 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
         </Paper>
-        <ModalWindow showModal={showModal} headerText={'Просмотр'} closeModal={()=>{setShowModal(false); }}>
-                    {columns.map((column) => (
-                        <>
-                            <Typography key={column} variant="subtitle1" color="textSecondary">
-                                {column.header}
-                            </Typography>
-                            <Typography variant="body1">
-                                {showingItem ? showingItem[column.field] : '—'}
-                            </Typography>
-                        </>
-                    ))}
-        </ModalWindow>
     </ThemeProvider>
     )
 }

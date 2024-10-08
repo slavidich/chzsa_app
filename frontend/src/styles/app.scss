@@ -30,6 +30,9 @@ main{
 .hidden-column{
     display: none !important;
 }
+.table-row-hover:hover{
+    background-color: blue !important;
+}
 .modal-overlay {
     position:fixed;
     top: 0;

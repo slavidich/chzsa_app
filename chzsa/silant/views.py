@@ -48,13 +48,13 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token)
     }
 
-def paginate_queryset(model, request, serializer_class, sort_field='id', **filter_params):
+def paginate_queryset(model, request, serializer_class, sort_field='id', search_field=None, **filter_params):
     page_size = request.query_params.get('page_size', 10)
     paginator = PageNumberPagination()
     paginator.page_size = page_size
 
     sort_order  = request.query_params.get('sortOrder', 'asc')
-    search_field = request.query_params.get('searchField', None)
+
     search_value = request.query_params.get('searchValue', None)
 
     if sort_order == 'desc':
@@ -163,13 +163,8 @@ def directories(request):
     if request.method=='GET':
         entity_name = request.query_params.get('entity_name', None)
         sort_field = request.query_params.get('sortField', 'id')
-        return paginate_queryset(Directory, request, DirectorySerializer, sort_field=sort_field, entity_name=entity_name)
-        #
-        paginator = PageNumberPagination()
-        paginator.page_size = 10
-        result_page = paginator.paginate_queryset(directories, request)
-        serializer = DirectorySerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        search_field = request.query_params.get('searchField', None)
+        return paginate_queryset(Directory, request, DirectorySerializer, sort_field=sort_field,search_field=search_field, entity_name=entity_name)
     elif request.method=='POST':
         serializer = DirectorySerializer(data=request.data)
         if serializer.is_valid():
@@ -221,7 +216,8 @@ def users(request):
     if request.method == 'GET':
         target_groups = ['Клиент']
         sort_field = request.query_params.get('sortField', 'id')
-        return paginate_queryset(User, request, UserSerializer, sort_field=sort_field, groups__name__in=target_groups)
+        search_field = request.query_params.get('searchField', None)
+        return paginate_queryset(User, request, UserSerializer, sort_field=sort_field, search_field=search_field, groups__name__in=target_groups)
     elif request.method=='POST':
         data = request.data
         firstName = data.get('first_name')
@@ -251,12 +247,30 @@ def users(request):
             return Response('', status=status.HTTP_400_BAD_REQUEST)
 @api_view(['POST'])
 def updatePassword(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check != 'Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
     data = request.data
     userid = data.get('id')
     sendEmailResetPassword.delay(userid)
     return Response('', status=status.HTTP_200_OK)
 
-@api_view(['GET', 'POST', 'PUT']) # api/users
+@api_view(['POST'])
+def updatePasswordUsername(request):
+    role_check = get_role_from_request(request)
+    if isinstance(role_check, Response):
+        return role_check
+    if role_check != 'Менеджер':
+        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+    data = request.data
+    username = data.get('username')
+    user = User.objects.get(username=username)
+    sendEmailResetPassword.delay(user.id)
+    return Response('', status=status.HTTP_200_OK)
+
+@api_view(['GET', 'POST', 'PUT']) # api/services
 def services(request):
     role_check = get_role_from_request(request)
     if isinstance(role_check, Response):
@@ -273,7 +287,58 @@ def services(request):
             sort_field = 'user__last_name'
         elif sort_field == 'user_email':
             sort_field = 'user__email'
-        return paginate_queryset(Service, request, ServiceSerializer, sort_field=sort_field)
+        search_field = request.query_params.get('searchField', None)
+        if search_field == 'username':
+            search_field = 'user__username'
+        elif search_field == 'user_first_name':
+            search_field = 'user__first_name'
+        elif search_field == 'user_last_name':
+            search_field = 'user__last_name'
+        elif search_field == 'user_email':
+            search_field = 'user__email'
+        return paginate_queryset(Service, request, ServiceSerializer, search_field=search_field, sort_field=sort_field)
+    elif request.method=='POST':
+        data = request.data
+        firstName = data.get('user_first_name')
+        lastName = data.get('user_last_name')
+        email = data.get('user_email')
+        try:
+            lastuser = User.objects.filter(username__startswith='service').order_by('id').last()
+            lastusernumber = lastuser.username.replace('service', '') or '0'
+            user = User.objects.create(username=f'service{int(lastusernumber) + 1}', first_name=firstName,
+                                       last_name=lastName, email=email)
+            service_group = Group.objects.get(name='Сервисная организация')
+            user.groups.add(service_group)
+            sendEmailResetPassword.delay(user.id, isRegistration=True)  # celery таска !!!
+            Service.objects.create(user=user, name=data.get('name'), description=data.get('description'))
+        except :
+            return Response('', status=status.HTTP_400_BAD_REQUEST)
+        return Response('ok', status=status.HTTP_201_CREATED)
+    elif request.method=='PUT':
+        try:
+            data = request.data
+            firstName = data.get('user_first_name')
+            lastName = data.get('user_last_name')
+            email = data.get('user_email')
+            name = data.get('name')
+            description = data.get('description')
+            username = data.get('username')
+            user = User.objects.get(username=username)
+            # Обновление пользователя
+            user = User.objects.get(username=username)
+            user.first_name = firstName
+            user.last_name = lastName
+            user.email = email
+            user.save()
+            # Обновление сервиса
+            service = Service.objects.get(user=user)
+            service.name = name
+            service.description = description
+            service.save()
+            return Response('', status=status.HTTP_200_OK)
+        except:
+            return Response('', status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 def create_user(request):
