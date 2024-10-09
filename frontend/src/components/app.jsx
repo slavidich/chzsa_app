@@ -23,6 +23,7 @@ const Services = React.lazy(()=>import('./services/services.jsx'))
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 5*1000*60
 export const pagination_page = 10
+export const error404 = <div className='e404'><p>404... not found</p></div>
 
 function App() {
     const dispatch = useDispatch();
@@ -49,7 +50,7 @@ function App() {
         <main>
             <Suspense>
                 <Routes>
-                    <Route path="*" element={<div className='e404'><p>404... not found</p></div>} />
+                    <Route path="*" element={error404} />
                     <Route path="/" element={<MainPage/>}></Route>
                     <Route path="/login" element={<LoginPage/>} />
                     <Route path='/directories' element={<ProtectedRoute requiredRole='Менеджер'><Directories/></ProtectedRoute>}/>

@@ -109,7 +109,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 {canSearch&&
                 <div className="table">
                     {canAdd&&<div className="addButton">
-                            <Button variant="contained" color="primary" onClick={()=>navigate('new')}>
+                            <Button variant="contained" color="primary" onClick={actionOnAdd===undefined? ()=>navigate('new'):actionOnAdd}>
                                 {/*<AddIcon/>*/}
                                 Добавить
                             </Button>

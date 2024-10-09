@@ -34,12 +34,26 @@ def get_user_from_request(request):
 def get_role_from_request(request):
     user = get_user_from_request(request)
     if isinstance(user, AnonymousUser):
-        return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
-    if user.groups.filter(name='Менеджер').exists():
-        return 'Менеджер'
-    elif user.groups.filter(name='Клиент').exists():
-        return 'Клиент'
-    return Response({"error": "No access token provided"}, status=status.HTTP_401_UNAUTHORIZED)
+        return 'Anon'
+    groups = ['Менеджер', 'Клиент', 'Сервисная организация']
+    group = user.groups.filter(name__in=groups).first()
+    if group:
+        return group.name
+    else:
+        return get401()
+
+def get_item_by_id(request, model, serializer, id):
+    item = model.objects.filter(id=id).first()
+    if not item:
+        return get404()
+    serialized_item = serializer(item)
+    return Response(serialized_item.data, status=status.HTTP_200_OK)
+def get404():
+    return Response('Не найдено', status=status.HTTP_404_NOT_FOUND)
+def get403():
+    return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+def get401():
+    return Response('Токен авторизации не найден!', status=status.HTTP_401_UNAUTHORIZED)
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -156,10 +170,8 @@ def login_view(request):
 @api_view(['GET', 'POST', 'PUT', 'DELETE']) # все это для справочника менеджеров
 def directories(request):
     role_check = get_role_from_request(request)
-    if isinstance(role_check, Response):
-        return role_check
     if role_check!='Менеджер':
-        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+        return get403()
     if request.method=='GET':
         entity_name = request.query_params.get('entity_name', None)
         sort_field = request.query_params.get('sortField', 'id')
@@ -189,6 +201,12 @@ def directories(request):
             return Response(f'Справочник с ID={directory_id} был успешно удален', status=status.HTTP_200_OK)
         except:
             return Response('Справочник с ID не найден', status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET'])
+def get_directory(request, id):
+    role_check = get_role_from_request(request)
+    if role_check== 'Anon':
+        return get403()
+    return get_item_by_id(request, Directory, DirectorySerializer, id)
 
 @api_view(['GET']) # поиск директорий для autocomplete полей
 def searchdirectories(request):

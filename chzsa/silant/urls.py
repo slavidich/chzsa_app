@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/token/refresh', refreshtokens, name='refreshtokens'),
     path('api/token/whoami', whoami, name='whoami'),
     path('api/directories', directories, name='directories'),
+    path('api/directories/<int:id>', get_directory, name='get_directory'),
     path('api/searchdirectories',searchdirectories, name='searchdirectories' ),
     path('api/users', users, name='users'),
     path('api/refreshpassword', updatePassword, name='updatePassword'),

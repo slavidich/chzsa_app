@@ -1,66 +1,119 @@
 import React, {useState} from "react";
+import WhiteBox from '../WhiteBox.jsx'
+import { useSearchParams } from "react-router-dom";
+import { FormControl, TextField, Button, CircularProgress, InputLabel, Select,MenuItem,Typography   } from "@mui/material";
+import { directorieslist } from "./directories.jsx";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { refreshTokenIfNeeded } from "../authUtils.js";
+import axios from "axios";
+import { mainAddress } from "../app.jsx";
+import {RequiredStar} from '../muiUtil.jsx'
+import {EditableField, EditableSelectField} from "../muiUtil.jsx";
 
-function AddDirectory(){
+function AddDirectory(){    
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams();
+    const entity = searchParams.get('entity_name')
+    const dispatch = useDispatch()
+    const [formLoading, setFormLoading] = useState(false)
     const [formData, setFormData] = useState({ // новая запись
+        entity_name: entity,
         name: '', 
         description: '' 
     }); 
     const [formErrors, setFormErrors] = useState({
         name: false,
-        description: false,
     })
-    
-    return(<div>
-        Добавление новой директории
-    </div>)
+    const handleAdd = async(e)=>{
+        e.preventDefault()
+        setFormLoading(true)
+        await refreshTokenIfNeeded(dispatch)
+        try {
+            await axios.post(`${mainAddress}/api/directories`, { ...formData }, { withCredentials: true });
+            setFormLoading(false)
+            navigate(`/directories?entity_name=${formData.entity_name}`)
+        } catch (error) {
+            alert(error);
+            setFormLoading(true)
+        }
+    }
+    const handleChange = (e)=>{
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+        if (name==='entity_name'){
+            setSearchParams({entity_name:value})
+        }
+        validateField(name, value)
+    }
+    const validateField = (name, value) => {
+        let isValid = true;
+
+        if (name != 'entity_name') {
+            isValid = value.trim() !== '';
+        } 
+        setFormErrors({
+            ...formErrors,
+            [name]: !isValid
+        });
+    };
+    const isValid =()=>{
+        const requireInputs = formData.name.trim() !== '' 
+        return requireInputs
+    }
+    return(
+    <WhiteBox headerText='Новый справочник' >
+        <form onSubmit={handleAdd}>
+            <EditableSelectField
+                label='Тип справочника'
+                isEditing={true}
+                name="entity_name"
+                value={formData.entity_name}
+                onChange={handleChange}
+                disabled={formLoading}
+                list={directorieslist}
+            />
+            <EditableField
+                isEditing={true}
+                label='Название'
+                name='name'
+                value={formData.name}
+                error={formErrors.name}
+                helperText='Название не может быть пустым'
+                onChange={handleChange}
+                loading={formLoading}
+                isReq={true}
+            />
+            <EditableField
+                isEditing={true}
+                label='Описание'
+                name='description'
+                value={formData.description}
+                onChange={handleChange}
+                loading={formLoading}
+                isReq={false}
+            />
+            <div className="formButtons">
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={!isValid()||formLoading} >
+                    {formLoading?<CircularProgress/>:<>Сохранить</>}
+                </Button>
+            </div>
+        </form>
+    </WhiteBox>)
 }
 
 export default AddDirectory
 
 /*
 <ModalWindow headerText={isEditing ? 'Редактировать элемент' : 'Добавить новый элемент'} showModal={showModal} closeModal={closeModal}>
-                <form onSubmit={handleAddOrEdit}>
-                    <FormControl fullWidth margin="normal">
-                        <TextField
-                            id='name'
-                            label='Название'
-                            variant='outlined'
-                            name='name'
-                            value={newDirectory.name}
-                            onChange={handleChange}
-                            error={formError.name}
-                            helperText={formError.name && "Поле не может быть пустым"}
-                            disabled={formLoading}
-                            required
-                        />
-                    </FormControl>
-                    <FormControl fullWidth margin="normal">
-                        <TextField
-                            multiline
-                            rows={4}
-                            id='description'
-                            label='Описание'
-                            variant='outlined'
-                            name='description'
-                            value={newDirectory.description}
-                            onChange={handleChange}
-                            disabled={formLoading}
-                            error={formError.description}
-                            helperText={formError.description && "Поле не может быть пустым"}
-                            required
-                        />
-                    </FormControl>
-                    <div className="formButtons">
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            disabled={!isValid()||formLoading} >
-                            {formLoading?<CircularProgress  />:<>{isEditing?"Сохранить":"Добавить"}</>}
-                        </Button>
-                        
-                    </div>
-                </form>
+                
             </ModalWindow>
             
             const handleEdit = (item) => {
