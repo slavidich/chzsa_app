@@ -7,7 +7,7 @@ from django.contrib.auth.models import User, Group
 class DirectorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Directory
-        fields = '__all__'
+        fields = ['id', 'entity_name', 'name', 'description']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

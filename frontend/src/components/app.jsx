@@ -7,6 +7,7 @@ import Footer from './footer.jsx'
 
 import { checkAuthStatus } from './authUtils';
 import { Navigate } from "react-router-dom";
+import AddUser from "./users/AddUser";
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
@@ -56,9 +57,11 @@ function App() {
                     <Route path='/directories' element={<ProtectedRoute requiredRole='Менеджер'><Directories/></ProtectedRoute>}/>
                     <Route path='/directories/new' element={<ProtectedRoute requiredRole='Менеджер'><AddDirectory/></ProtectedRoute>}/>
                     <Route path='/directories/:id' element={<CheckDirectory></CheckDirectory>}/>
+                    <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>
+                    <Route path="/users/new" element={<ProtectedRoute requiredRole='Менеджер'><AddUser/></ProtectedRoute>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
-                    <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>
+                    
                     <Route path="/services" element={<ProtectedRoute requiredRole='Менеджер'><Services/></ProtectedRoute>}/>
                 </Routes>
             </Suspense>

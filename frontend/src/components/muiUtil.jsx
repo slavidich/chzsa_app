@@ -1,6 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 import React from 'react';
 import { TextField, Typography, Box, FormControl, Select, MenuItem } from '@mui/material';
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const theme = createTheme({
     typography: {
@@ -13,12 +14,21 @@ export const theme = createTheme({
 
 export const RequiredStar =()=> <span style={{ color: 'red' }}> *</span>
 
+export const validateEmail= (email) =>{
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (emailRegex.test(email)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 export const EditableField = ({isEditing,name, label, value, 
                                 error, helperText, onChange, 
                                 loading, isReq=false, multiline=false})=>{
   return(
     <FormControl fullWidth margin="normal">
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>{label}{isReq?<RequiredStar/>:<></>}</Typography>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>{label}{isReq&&isEditing?<RequiredStar/>:<></>}</Typography>
         {isEditing?
           <TextField 
               name={name}
@@ -27,7 +37,7 @@ export const EditableField = ({isEditing,name, label, value,
               error={error}
               helperText={error && helperText}
               disabled={loading}
-              required
+              required={isReq}
           />
         :
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
@@ -53,12 +63,12 @@ export const EditableSelectField = ({isEditing,name, label, value,
                 disabled={loading}
             >
                 {list.map((item)=>(
-                    <MenuItem value={item[0]}>{item[1]}</MenuItem>
+                    <MenuItem key={item[0]} value={item[0]}>{item[1]}</MenuItem>
                 ))}
             </Select>
         :
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                {value}
+                {list.find(item=>item[0]===value)?list.find(item=>item[0]===value)[1]:<></>}
             </Typography>
         }
 

@@ -1,3 +1,124 @@
+import React, {useState} from "react";
+import WhiteBox from '../WhiteBox.jsx'
+import { useSearchParams } from "react-router-dom";
+import {  Button, CircularProgress } from "@mui/material";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { refreshTokenIfNeeded } from "../authUtils.js";
+import axios from "axios";
+import { mainAddress } from "../app.jsx";
+import {EditableField, validateEmail} from "../muiUtil.jsx";
+
+function AddUser(){
+    const dispatch = useDispatch()
+    const [formLoading, setFormLoading] = useState(false)
+    const [formData, setFormData] = useState({
+        first_name:'', 
+        last_name:'',
+        email:''
+    })
+    const [formErrors, setFormErrors] = useState({
+        first_name:false, 
+        last_name:false,
+        email:false
+    })
+    const handleChange= (e)=>{
+        const {name, value} = e.target
+        setFormData({
+            ...formData,
+            [name]:value
+        })
+        validateField(name, value)
+    }
+    const validateField = (name, value)=>{
+        let isValid = true;
+
+        if (name === 'email') {
+            isValid = validateEmail(value)
+        } else{
+            isValid = value.trim() !== ''
+        }
+        setFormErrors({
+            ...formErrors,
+            [name]: !isValid
+        });
+    }
+    const handleAdd= async(e)=>{
+        e.preventDefault()
+        console.log(formData)
+        try{
+            setFormLoading(true)
+            await refreshTokenIfNeeded(dispatch)
+            const response = await axios.post(`${mainAddress}/api/users`, {...formData}, {withCredentials:true})
+            setFormLoading(false)
+            navigate(`/users`)
+        }catch(error){
+            alert(error)
+            setFormLoading(false)
+        }
+    }
+    const isValid = ()=>{
+        const requireInputs = formData.first_name.trim() !== '' &&
+            formData.last_name.trim() !== '' &&
+            validateEmail(formData.email)
+        return requireInputs
+    }
+    return(
+        <div className="addUser">
+            <WhiteBox headerText='Добавление клиента'>
+                <form onSubmit={handleAdd}>
+                    <EditableField
+                        isEditing={true}
+                        label='Имя'
+                        name='first_name'
+                        value={formData.first_name}
+                        error={formErrors.first_name}
+                        helperText='Имя не может быть пустым'
+                        onChange={handleChange}
+                        loading={formLoading}
+                        isReq={true}
+                    />
+                    <EditableField
+                        isEditing={true}
+                        label='Фамилия'
+                        name='last_name'
+                        value={formData.last_name}
+                        error={formErrors.last_name}
+                        helperText='Фамилия не может быть пустым'
+                        onChange={handleChange}
+                        loading={formLoading}
+                        isReq={true}
+                    />
+                    <EditableField
+                        isEditing={true}
+                        label='Почта'
+                        name='email'
+                        value={formData.email}
+                        error={formErrors.email}
+                        helperText='Введите корректную почту'
+                        onChange={handleChange}
+                        loading={formLoading}
+                        isReq={true}
+                    />
+                    <div className="formButtons">
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={!isValid()||formLoading} >
+                            {formLoading?<CircularProgress/>:<>Добавить</>}
+                        </Button>
+                    </div>
+                </form>
+            </WhiteBox>
+        </div>
+    )
+}
+
+export default AddUser
+
+
+/*
 <ModalWindow showModal={showModal} headerText={isEditing?'Изменение пользователя':'Добавление пользователя'} closeModal={closeModal}>
                     <form onSubmit={handleSubmit}>
                         {isEditing&&<FormControl fullWidth margin="normal">
@@ -76,4 +197,4 @@
                             </Button>}
                         </div>
                     </form>
-                </ModalWindow>
+                </ModalWindow>*/

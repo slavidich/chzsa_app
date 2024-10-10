@@ -28,7 +28,9 @@ function Directories(){
         if (entityName && entityName !== activeType) {
             setActiveType(entityName);
         }
+        
     }, [activeType, searchParams])
+    
     const memoizedParams = useMemo(() => ({
         entity_name: activeType
     }), [activeType]);
@@ -57,7 +59,7 @@ function Directories(){
                     canSearch={true}
                     canChange={true}
                     refreshKey={refreshKey}
-                    actionOnAdd={()=>navigate(`new?entity_name=${activeType}`)}
+                    actionOnAdd={()=>{navigate(`new?entity_name=${activeType}`, {state:{from: location.pathname+location.search}})}}
                 />
             </div>
             

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { refreshTokenIfNeeded } from './authUtils'; // 
 import { mainAddress } from './app.jsx'; 
 import axios from "axios";
@@ -35,18 +35,25 @@ export const getData = async({path, params, dispatch, setLoading, setData, setTo
 function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc', refreshKey=null,
                         canAdd=false, actionOnAdd=undefined, 
                         canSearch=false}){
+    const query = useQuery();
+    const navigate = useNavigate()
+
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(pageSize);
-    const [sortField, setSortField] = useState(defaultSortField);
-    const [sortOrder, setSortOrder] = useState(defaultSortOrder);
-    const [searchField, setSearchField] = useState('');
-    const [searchValue, setSearchValue] = useState('');
+    const [page, setPage] = useState(Number(query.get('page')) || 1);
+    const [rowsPerPage, setRowsPerPage] = useState(Number(query.get('rowsPerPage')) || pageSize);
+    const [sortField, setSortField] = useState(query.get('sortField') || defaultSortField);
+    const [sortOrder, setSortOrder] = useState(query.get('sortOrder') || defaultSortOrder);
+    const [searchField, setSearchField] = useState(query.get('searchField') || '');
+    const [searchText, setSearchText] =  useState(query.get('searchValue') || '');
+    const [searchValue, setSearchValue] = useState(query.get('searchValue') || '');
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-    const navigate = useNavigate()
+    
+    function useQuery() {
+        return new URLSearchParams(useLocation().search);
+    }
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -76,9 +83,34 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     };
 
     useEffect(() => {
-        //console.log(types)
+        const urlparams = new URLSearchParams();
+        if (params){
+            Object.entries(params).forEach(([key, value])=>{
+            if (value){
+                urlparams.set(key, value)
+            }
+        })}
+        urlparams.set('page', page);
+        rowsPerPage===10?undefined:urlparams.set('rowsPerPage', rowsPerPage);
+        sortField==='id'&&sortOrder==='asc'?undefined:urlparams.set('sortField', sortField);
+        sortOrder==='asc'?undefined:urlparams.set('sortOrder', sortOrder);
+        if (searchField) urlparams.set('searchField', searchField);
+        if (searchValue) urlparams.set('searchValue', searchValue);
+        navigate({ search: urlparams.toString() }, { replace: true });
         fetchData();
-    }, [page, rowsPerPage, sortField, sortOrder, params, searchField, refreshKey]);
+    }, [page, rowsPerPage, sortField, sortOrder, params, searchValue, refreshKey]);
+
+    const handleAddClick = ()=>{
+        if (actionOnAdd){
+            actionOnAdd()
+        }else{
+            navigate('new', {state:{from: location.pathname+location.search}})
+        }
+        
+    }
+    const handleRowClick =(row)=>{
+        navigate(`${row.id}`, {state:{from: location.pathname+location.search}})
+    }
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -95,11 +127,12 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
         setSortField(field);
     };
     const handleSearch = () => {
+        setSearchValue(searchText)
         setPage(0);  // При новом поиске возвращаемся на первую страницу
-        fetchData();
     };
     const handleSearchCancel = async ()=>{
         setPage(0);
+        setSearchText('')
         setSearchValue('')
         setSearchField('')
     }
@@ -109,7 +142,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 {canSearch&&
                 <div className="table">
                     {canAdd&&<div className="addButton">
-                            <Button variant="contained" color="primary" onClick={actionOnAdd===undefined? ()=>navigate('new'):actionOnAdd}>
+                            <Button variant="contained" color="primary" onClick={handleAddClick}>
                                 {/*<AddIcon/>*/}
                                 Добавить
                             </Button>
@@ -132,11 +165,11 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                         </Select>
                         <TextField
                             label="Поиск"
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
                             disabled={searchField===''? true:false}
                         />
-                        <Button variant="contained" onClick={handleSearch} disabled={searchValue!=''?false:true}>
+                        <Button variant="contained" onClick={handleSearch} disabled={searchText!=''?false:true}>
                             Искать
                         </Button>
                         <Button variant="contained" onClick={handleSearchCancel} disabled={searchValue!=''?false:true}>
@@ -185,7 +218,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                                         backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white', // Чередуем цвета строк
                                         cursor: 'pointer',
                                     }}
-                                    onClick={()=>navigate(`${row.id}`)}
+                                    onClick={()=>handleRowClick(row)}
                                     /*onClick={() => window.open(`/path/${row.id}`, '_blank')} */ // это на случай если в новой вкладке будет результативнее открывать все это 
                                 >
                                     {columns.map((column) => (
