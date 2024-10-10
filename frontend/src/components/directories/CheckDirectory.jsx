@@ -36,7 +36,6 @@ function CheckDirectory(){
             setFormData({...response.data})
             setFetchedData({...response.data})
             setFormLoading(false)
-            navigateBack(location, `directories/${fetchedData.entity_name}`)
         }catch(error){
             if (error.response && error.response.status === 404) {
                 navigate('/404')

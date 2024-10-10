@@ -4,6 +4,7 @@ import React, {useEffect, useState} from "react";
 import { mainAddress } from "../app.jsx";
 import { useDispatch } from "react-redux";
 import { refreshTokenIfNeeded } from "../authUtils.js";
+import { useSearchParams } from "react-router-dom";
 import { TextField, Button, FormControl, FormLabel, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 
 import UniversalTable from "../dataTable.jsx";
@@ -11,12 +12,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 function Users(){
     const dispatch = useDispatch();
-    const [showModal, setShowModal] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [editingItem, setEditingItem] = useState({})
-    const [refreshKey, setRefreshKey] = useState(false);
-    const [formLoading, setFormLoading] = useState(false)
-    const [refreshPasswordLoading, setRefreshPasswordLoading] = useState(false)
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(()=>{
+        if (searchParams.get('page')===null){
+            setSearchParams({  page:1}); 
+        }
+    }, [])
+
     const [formData, setFormData] = useState({
         username:'',
         first_name: '',
@@ -28,6 +31,7 @@ function Users(){
         last_name: false,
         email: false
     });
+
     const clearFormData = ()=>{
         for (let key in formData){
             formData[key]=''
@@ -151,8 +155,6 @@ function Users(){
                 dispatch={dispatch}
                 canAdd={true}
                 canSearch={true}
-                canChange={true}
-                refreshKey={refreshKey}
             />
         </div>
         

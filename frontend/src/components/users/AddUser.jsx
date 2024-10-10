@@ -10,6 +10,7 @@ import { mainAddress } from "../app.jsx";
 import {EditableField, validateEmail} from "../muiUtil.jsx";
 
 function AddUser(){
+    const navigate=useNavigate()
     const dispatch = useDispatch()
     const [formLoading, setFormLoading] = useState(false)
     const [formData, setFormData] = useState({

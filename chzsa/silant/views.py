@@ -227,10 +227,8 @@ def searchdirectories(request):
 @api_view(['GET', 'POST', 'PUT']) # api/users
 def users(request):
     role_check = get_role_from_request(request)
-    if isinstance(role_check, Response):
-        return role_check
     if role_check != 'Менеджер':
-        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+        return get403()
     if request.method == 'GET':
         target_groups = ['Клиент']
         sort_field = request.query_params.get('sortField', 'id')
@@ -263,6 +261,14 @@ def users(request):
                 return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response('', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_user_id(request, id):
+    role_check = get_role_from_request(request)
+    if role_check!= 'Менеджер':
+        return get403()
+    return get_item_by_id(request, User, UserSerializer, id)
+
 @api_view(['POST'])
 def updatePassword(request):
     role_check = get_role_from_request(request)

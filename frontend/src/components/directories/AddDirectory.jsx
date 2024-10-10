@@ -35,7 +35,7 @@ function AddDirectory(){
                 console.log(location.state)
                 navigate(location.state.from)
             }else{
-                navigate(`/directories?entity_name=${formData.entity_name}`)
+                navigate(`/directories?entity_name=${formData.entity_name}&page=1`)
             }
         } catch (error) {
             alert(error);

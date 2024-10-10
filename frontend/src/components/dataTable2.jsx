@@ -33,29 +33,29 @@ export const getData = async({path, params, dispatch, setLoading, setData, setTo
     }
 }
 
-function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc',
+function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc', resetParamsKey=null,
                         canAdd=false, actionOnAdd=undefined, 
                         canSearch=false}){
     
+    const query = useQuery();
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
+    const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
+    const [rowsPerPage, setRowsPerPage] = useState(Number(query.get('rowsPerPage')) || pageSize);
+    const [sortField, setSortField] = useState(query.get('sortField') || defaultSortField);
+    const [sortOrder, setSortOrder] = useState(query.get('sortOrder') || defaultSortOrder);
+    const [searchField, setSearchField] = useState(query.get('searchField') || '');
+    const [searchText, setSearchText] =  useState(query.get('searchValue') || '');
+    const [searchValue, setSearchValue] = useState(query.get('searchValue') || '');
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    //тут получаем значения из url 
-    const page = Number(searchParams.get('page')) || 1;
-    const rowsPerPage = Number(searchParams.get('rowsPerPage')) || pageSize;
-    const sortField = searchParams.get('sortField') || defaultSortField;
-    const sortOrder = searchParams.get('sortOrder') || defaultSortOrder;
-    const searchField = searchParams.get('searchField') || '';
-    const searchValue = searchParams.get('searchValue') || '';
-
-    const [searchText, setSearchText] = useState(searchValue)
-    const [searchFieldInput, setSearchField] = useState(searchField)
     
+    function useQuery() {
+        return new URLSearchParams(useLocation().search);
+    }
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -64,7 +64,6 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
     const fetchData = async () => {
         await getData({
             path: path,
@@ -86,23 +85,24 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     };
     
     useEffect(() => {
-        fetchData();
-    }, [searchParams, params]); // Зависимость от searchParams
-
-    const updateUrlParams = (newParams) => {
-        const currentParams = Object.fromEntries(searchParams);
-        const updatedParams = { ...currentParams };
-    
-        Object.entries(newParams).forEach(([key, value]) => {
-            if (value === undefined) {
-                delete updatedParams[key];
-            } else {
-                updatedParams[key] = value;
+        const urlparams = new URLSearchParams();
+        if (params){
+            Object.entries(params).forEach(([key, value])=>{
+            if (value){
+                urlparams.set(key, value)
             }
-        });
-    
-        setSearchParams(updatedParams);
-    };
+        })}
+        urlparams.set('page', page);
+        rowsPerPage===10?undefined:urlparams.set('rowsPerPage', rowsPerPage);
+        sortField==='id'&&sortOrder==='asc'?undefined:urlparams.set('sortField', sortField);
+        sortOrder==='asc'?undefined:urlparams.set('sortOrder', sortOrder);
+        if (searchField) urlparams.set('searchField', searchField);
+        if (searchValue) urlparams.set('searchValue', searchValue);
+        navigate({ search: urlparams.toString() }, { replace: true });
+        fetchData();
+        
+    }, [page, rowsPerPage, sortField, sortOrder, params, searchValue]);
+
     const handleAddClick = ()=>{
         if (actionOnAdd){
             actionOnAdd()
@@ -116,25 +116,29 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     }
 
     const handleChangePage = (event, newPage) => {
-        updateUrlParams({page:newPage+1});
+        setPage(newPage+1);
     };
     
     const handleChangeRowsPerPage = (event) => {
-        const rowsPerPage = parseInt(event.target.value, 10)
-        updateUrlParams({rowsPerPage:rowsPerPage===10?undefined:rowsPerPage, page:1})
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(1);
     };
     
     const handleSort = (field) => {
         const isAsc = sortField === field && sortOrder === 'asc';
-        updateUrlParams({sortOrder:isAsc ? 'desc' : undefined, sortField:field==='id'?undefined:field})
+        setSortOrder(isAsc ? 'desc' : 'asc');
+        setSortField(field);
     };
     const handleSearch = () => {
-        updateUrlParams({searchValue:searchText, page:1, searchField:searchFieldInput})
-
+        console.log('4')
+        setSearchValue(searchText)
+        setPage(1);  // При новом поиске возвращаемся на первую страницу
     };
     const handleSearchCancel = async ()=>{
-        updateUrlParams({searchField:undefined, searchValue:undefined, page:1})
+        console.log('5')
+        setPage(1);
         setSearchText('')
+        setSearchValue('')
         setSearchField('')
     }
 
@@ -144,13 +148,14 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 <div className="table">
                     {canAdd&&<div className="addButton">
                             <Button variant="contained" color="primary" onClick={handleAddClick}>
+                                {/*<AddIcon/>*/}
                                 Добавить
                             </Button>
                         </div>}
                     <div className="searchdiv">
                         
                         <Select
-                            value={searchFieldInput}
+                            value={searchField}
                             onChange={(e) => setSearchField(e.target.value)}
                             displayEmpty
                         >
@@ -167,7 +172,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             label="Поиск"
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
-                            disabled={searchFieldInput===''? true:false}
+                            disabled={searchField===''? true:false}
                         />
                         <Button variant="contained" onClick={handleSearch} disabled={searchText!=''?false:true}>
                             Искать

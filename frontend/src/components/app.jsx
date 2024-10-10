@@ -16,8 +16,10 @@ const Directories = React.lazy(()=>import('./directories/directories.jsx'))
 const AddDirectory = React.lazy(()=>import('./directories/AddDirectory.jsx'))
 const CheckDirectory = React.lazy(()=>import('./directories/CheckDirectory.jsx'))
 
-const Cars = React.lazy(()=>import('./cars/cars.jsx'))
 const Users = React.lazy(()=>import('./users/users.jsx'))
+const CheckUser = React.lazy(()=>import('./users/CheckUser.jsx'))
+const Cars = React.lazy(()=>import('./cars/cars.jsx'))
+
 const Services = React.lazy(()=>import('./services/services.jsx'))
 
 
@@ -58,6 +60,7 @@ function App() {
                     <Route path='/directories/new' element={<ProtectedRoute requiredRole='Менеджер'><AddDirectory/></ProtectedRoute>}/>
                     <Route path='/directories/:id' element={<CheckDirectory></CheckDirectory>}/>
                     <Route path="/users" element={<ProtectedRoute requiredRole='Менеджер'><Users/></ProtectedRoute>}/>
+                    <Route path="/users/:id" element={<ProtectedRoute requiredRole='Менеджер'><CheckUser/></ProtectedRoute>}/>
                     <Route path="/users/new" element={<ProtectedRoute requiredRole='Менеджер'><AddUser/></ProtectedRoute>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />

@@ -21,25 +21,35 @@ function Directories(){
     const navigate = useNavigate()
     const dispatch = useDispatch();
     const [activeType, setActiveType] = useState(searchParams.get('entity_name')||directorieslist[0][0]); // первый тип активный
-    const [refreshKey, setRefreshKey] = useState(false);
 
+    useEffect(()=>{
+        if (searchParams.get('page')===null){
+            setSearchParams({ entity_name: activeType, page:1}); 
+        }
+    }, [])
     useEffect(()=>{
         const entityName = searchParams.get('entity_name');
         if (entityName && entityName !== activeType) {
             setActiveType(entityName);
         }
-        
-    }, [activeType, searchParams])
+    }, [searchParams])
     
     const memoizedParams = useMemo(() => ({
         entity_name: activeType
     }), [activeType]);
     
+    const handleChangeType = (type)=>{
+        if (searchParams.get('rowsPerPage')===null){
+            setSearchParams({ entity_name: type, page:1}); 
+        }else{
+            setSearchParams({ entity_name: type, page:1, rowsPerPage:searchParams.get('rowsPerPage')}); 
+        }
+    }
     return(
         <div className='directories'>
             <div className='types'>
                 {directorieslist.map(([key, label]) => (
-                <p key={key} onClick={() => { setActiveType(key); setSearchParams({ entity_name: key });}} className={activeType === key ? 'active' : ''}>
+                <p key={key} onClick={() => handleChangeType(key)} className={activeType === key ? 'active' : ''}>
                     {label}
                 </p>
                 ))}
@@ -58,8 +68,8 @@ function Directories(){
                     canAdd={true}
                     canSearch={true}
                     canChange={true}
-                    refreshKey={refreshKey}
                     actionOnAdd={()=>{navigate(`new?entity_name=${activeType}`, {state:{from: location.pathname+location.search}})}}
+
                 />
             </div>
             
