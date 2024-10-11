@@ -23,11 +23,6 @@ function Directories(){
     const [activeType, setActiveType] = useState(searchParams.get('entity_name')||directorieslist[0][0]); // первый тип активный
 
     useEffect(()=>{
-        if (searchParams.get('page')===null){
-            setSearchParams({ entity_name: activeType, page:1}); 
-        }
-    }, [])
-    useEffect(()=>{
         const entityName = searchParams.get('entity_name');
         if (entityName && entityName !== activeType) {
             setActiveType(entityName);

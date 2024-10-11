@@ -46,6 +46,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     //тут получаем значения из url 
+    
     const page = Number(searchParams.get('page')) || 1;
     const rowsPerPage = Number(searchParams.get('rowsPerPage')) || pageSize;
     const sortField = searchParams.get('sortField') || defaultSortField;
@@ -57,6 +58,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     const [searchFieldInput, setSearchField] = useState(searchField)
     
     useEffect(() => {
+        
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };
@@ -87,7 +89,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
     
     useEffect(() => {
         fetchData();
-    }, [searchParams, params]); // Зависимость от searchParams
+    }, [searchParams]); // Зависимость от searchParams
 
     const updateUrlParams = (newParams) => {
         const currentParams = Object.fromEntries(searchParams);

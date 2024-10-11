@@ -272,10 +272,8 @@ def get_user_id(request, id):
 @api_view(['POST'])
 def updatePassword(request):
     role_check = get_role_from_request(request)
-    if isinstance(role_check, Response):
-        return role_check
     if role_check != 'Менеджер':
-        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+        return get403()
     data = request.data
     userid = data.get('id')
     sendEmailResetPassword.delay(userid)
@@ -284,10 +282,8 @@ def updatePassword(request):
 @api_view(['POST'])
 def updatePasswordUsername(request):
     role_check = get_role_from_request(request)
-    if isinstance(role_check, Response):
-        return role_check
     if role_check != 'Менеджер':
-        return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
+        return get403()
     data = request.data
     username = data.get('username')
     user = User.objects.get(username=username)
