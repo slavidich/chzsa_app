@@ -23,6 +23,28 @@ export const validateEmail= (email) =>{
     }
 }
 
+export const catchErrors = (error, navigate)=>{
+    if (error.response) {
+        switch (error.response.status) {
+            case 404:
+                navigate('/404');
+                break;
+            case 403:
+                navigate('/403')
+            case 401:
+                navigate('/login');
+                break;
+            case 500:
+                navigate('/500');
+                break;
+            default:
+                console.error('Unexpected error:', error.response);
+        }
+    } else {
+        alert('Error:', error.message || error);
+    }
+}
+
 export const EditableField = ({isEditing,name, label, value, 
                                 error, helperText, onChange, 
                                 loading, isReq=false, multiline=false})=>{

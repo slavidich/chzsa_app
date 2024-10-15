@@ -14,5 +14,6 @@ urlpatterns = [
     path('api/users/<int:id>', get_user_id, name='get_user'),
     path('api/refreshpassword', updatePassword, name='updatePassword'),
     path('api/services', services, name='services'),
+    path('api/services/<int:id>', get_service_id, name='services'),
     path('api/refreshpasswordusername', updatePasswordUsername, name='updatePasswordUsername')
 ]

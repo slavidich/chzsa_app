@@ -50,9 +50,15 @@ function AddUser(){
         try{
             setFormLoading(true)
             await refreshTokenIfNeeded(dispatch)
-            const response = await axios.post(`${mainAddress}/api/users`, {...formData}, {withCredentials:true})
+            await axios.post(`${mainAddress}/api/users`, {...formData}, {withCredentials:true})
+            const response = await axios.get(`${mainAddress}/api/users`, {withCredentials:true})
+            if (response.data.last_page){
+                navigate(`/users?page=${response.data.last_page}`)
+            }else{
+                navigate(`/users`)
+            }
             setFormLoading(false)
-            navigate(`/users`)
+            
         }catch(error){
             alert(error)
             setFormLoading(false)

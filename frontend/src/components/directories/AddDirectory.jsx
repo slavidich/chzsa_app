@@ -30,13 +30,13 @@ function AddDirectory(){
         await refreshTokenIfNeeded(dispatch)
         try {
             await axios.post(`${mainAddress}/api/directories`, { ...formData }, { withCredentials: true });
-            setFormLoading(false)
-            if (location.state&&location.state.from){
-                console.log(location.state)
-                navigate(location.state.from)
+            const response = await axios.get(`${mainAddress}/api/directories?entity_name=${formData.entity_name}`, {withCredentials:true})
+            if (response.data.last_page){
+                navigate(`/directories?entity_name=${formData.entity_name}&page=${response.data.last_page}`)
             }else{
                 navigate(`/directories?entity_name=${formData.entity_name}&page=1`)
             }
+            setFormLoading(false)
         } catch (error) {
             alert(error);
             setFormLoading(false)

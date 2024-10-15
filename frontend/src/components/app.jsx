@@ -22,6 +22,7 @@ const Cars = React.lazy(()=>import('./cars/cars.jsx'))
 
 const Services = React.lazy(()=>import('./services/services.jsx'))
 const AddService = React.lazy(()=>import('./services/AddService.jsx'))
+const CheckService = React.lazy(()=>import('./services/CheckService.jsx'))
 
 
 export const mainAddress = 'http://127.0.0.1:8000'
@@ -65,6 +66,7 @@ function App() {
                     <Route path="/users/new" element={<ProtectedRoute requiredRole='Менеджер'><AddUser/></ProtectedRoute>}/>
                     <Route path="/services" element={<ProtectedRoute requiredRole='Менеджер'><Services/></ProtectedRoute>}/>
                     <Route path="/services/new" element={<ProtectedRoute requiredRole='Менеджер'><AddService/></ProtectedRoute>}/>
+                    <Route path="/services/:id" element={<ProtectedRoute requiredRole='Менеджер'><CheckService/></ProtectedRoute>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
                     

@@ -34,6 +34,7 @@ function Directories(){
     }), [activeType]);
     
     const handleChangeType = (type)=>{
+        setActiveType(type)
         if (searchParams.get('rowsPerPage')===null){
             setSearchParams({ entity_name: type, page:1}); 
         }else{

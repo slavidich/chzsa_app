@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, AnonymousUser, Group
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -68,7 +69,6 @@ def paginate_queryset(model, request, serializer_class, sort_field='id', search_
     paginator.page_size = page_size
 
     sort_order  = request.query_params.get('sortOrder', 'asc')
-
     search_value = request.query_params.get('searchValue', None)
 
     if sort_order == 'desc':
@@ -83,9 +83,19 @@ def paginate_queryset(model, request, serializer_class, sort_field='id', search_
         queryset = queryset.filter(Q(**search_filter))
 
     queryset = queryset.order_by(sort_field)
+
+    django_paginator = Paginator(queryset, page_size)
+    total_pages = django_paginator.num_pages
+
     result_page = paginator.paginate_queryset(queryset, request)
     serializer = serializer_class(result_page, many=True)
-    return paginator.get_paginated_response(serializer.data)
+    response_data = {
+        'count': paginator.page.paginator.count,
+        'results': serializer.data,
+        'last_page':total_pages
+    }
+    return Response(response_data)
+    #return paginator.get_paginated_response(serializer.data)
 
 @api_view(['POST'])
 def refreshtokens(request):
@@ -293,8 +303,6 @@ def updatePasswordUsername(request):
 @api_view(['GET', 'POST', 'PUT']) # api/services
 def services(request):
     role_check = get_role_from_request(request)
-    if isinstance(role_check, Response):
-        return role_check
     if role_check != 'Менеджер':
         return Response('Недостаточно прав!', status=status.HTTP_403_FORBIDDEN)
     if request.method == 'GET':
@@ -358,6 +366,13 @@ def services(request):
             return Response('', status=status.HTTP_200_OK)
         except:
             return Response('', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_service_id(request, id):
+    role_check = get_role_from_request(request)
+    return get_item_by_id(request, Service, ServiceSerializer, id)
+
+    #return Response('', status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

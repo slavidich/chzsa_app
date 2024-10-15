@@ -3,7 +3,11 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { refreshTokenIfNeeded } from './authUtils'; // 
 import { mainAddress } from './app.jsx'; 
 import axios from "axios";
-import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider } from '@mui/material';
+import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,Box, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider, IconButton } from '@mui/material';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import LastPageIcon from '@mui/icons-material/LastPage';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import "../styles/dataTable.scss"
 import { theme } from './muiUtil';
 import { useSearchParams } from 'react-router-dom';
@@ -33,6 +37,54 @@ export const getData = async({path, params, dispatch, setLoading, setData, setTo
     }
 }
 
+function TablePaginationActions(props){
+    const {count, page, rowsPerPage, onPageChange} = props
+
+    const handleFirstPageButtonClick = (event) => {
+        onPageChange(event, 0);
+    };
+    const handleBackButtonClick = (event) => {
+        onPageChange(event, page - 1);
+    };
+    const handleNextButtonClick = (event) => {
+        onPageChange(event, page + 1);
+    };
+    const handleLastPageButtonClick = (event) => {
+        onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
+    };
+    return (
+        <div style={{ flexShrink: 0, marginLeft: 16 }}>
+            <IconButton
+                onClick={handleFirstPageButtonClick}
+                disabled={page === 0}
+                aria-label="first page"
+            >
+                <FirstPageIcon />
+            </IconButton>
+            <IconButton
+                onClick={handleBackButtonClick}
+                disabled={page === 0}
+                aria-label="previous page"
+            >
+                <KeyboardArrowLeft />
+            </IconButton>
+            <IconButton
+                onClick={handleNextButtonClick}
+                disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+                aria-label="next page"
+            >
+                <KeyboardArrowRight />
+            </IconButton>
+            <IconButton
+                onClick={handleLastPageButtonClick}
+                disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+                aria-label="last page"
+            >
+                <LastPageIcon />
+            </IconButton>
+        </div>
+    );
+}
 function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc',
                         canAdd=false, actionOnAdd=undefined, 
                         canSearch=false}){
@@ -239,6 +291,8 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                     </TableBody>
                 </Table>
             </TableContainer>
+            
+
             <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
@@ -248,7 +302,10 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 onPageChange={handleChangePage}
                 labelRowsPerPage={"Строк на страницу"} 
                 onRowsPerPageChange={handleChangeRowsPerPage}
+                ActionsComponent={TablePaginationActions}
             />
+            
+                
         </Paper>
     </ThemeProvider>
     )

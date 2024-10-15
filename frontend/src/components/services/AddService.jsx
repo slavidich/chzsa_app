@@ -58,7 +58,21 @@ function AddService(){
     }
     const handleAdd=async(e)=>{
         e.preventDefault()
-        console.log(formData)
+        try{
+            setFormLoading(true)
+            await refreshTokenIfNeeded(dispatch)
+            await axios.post(`${mainAddress}/api/services`, {...formData}, {withCredentials:true})
+            const response = await axios.get(`${mainAddress}/api/services`, {withCredentials:true})
+            if (response.data.last_page){
+                navigate(`/services?page=${response.data.last_page}`)
+            }else{
+                navigate(`/services`)
+            }
+            setFormLoading(false)
+        }catch(error){
+            alert(error)
+            setFormLoading(false)
+        }
     }
     return(
         <div className="addService">
