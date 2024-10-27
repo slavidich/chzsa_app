@@ -9,7 +9,7 @@ import axios from "axios";
 import { mainAddress } from "../app.jsx";
 import { useParams } from 'react-router-dom';
 import {EditableField, catchErrors, validateEmail} from "../muiUtil.jsx";
-// ДОДЕЛАТЬ import '../../styles/'
+import '../../styles/checkservice.scss'
 
 function CheckService(){
     const navigate = useNavigate()
@@ -77,70 +77,129 @@ function CheckService(){
             validateEmail(formData.user_email)
         return requireInputs
     }
+    const handleButton =async (e)=>{
+        e.preventDefault()
+        if (isEditing){
+            try{
+                await refreshTokenIfNeeded(dispatch)
+                setFormLoading(true)
+                const response = await axios.put(`${mainAddress}/api/services`, {...formData}, {withCredentials:true})
+                if(location.state){
+                    navigate(location.state.from)
+                }else{
+                    navigate(`/services?page=1`)
+                }
+            } catch(error){
+                alert(error);
+                setFormLoading(false)
+            }
+        } else{
+            setIsEditing(true)
+        }
+    }
+    const resetPassword=async()=>{
+        try{
+            await refreshTokenIfNeeded(dispatch)
+            setFormLoading(true)
+            const response = await axios.post(`${mainAddress}/api/refreshpassword`, {username:fetchedData.username}, {withCredentials:true})
+            alert('Пароль успешно сброшен и отправлен на почту клиента!')
+            setFormLoading(false)
+        } catch(error){
+            alert(error);
+            setFormLoading(false)
+        }
+    }
     return (
         <div className='checkService'>
-    <WhiteBox headerText={`Сервисная организация ID:${id}`}>
-        <EditableField
-            name='username'
-            isEditing={false}
-            label="username"
-            value={formData.username}
-        />
-        <EditableField
-            name='name'
-            isEditing={isEditing}
-            label="Название"
-            value={formData.name}
-            error={formErrors.name}
-            helperText='Заполните название'
-            onChange={handleChange}
-            disabled={formLoading}
-            isReq={true}
-        />
-        <EditableField
-            name='description'
-            isEditing={isEditing}
-            label="Описание"
-            value={formData.description}
-            onChange={handleChange}
-            disabled={formLoading}
-            isReq={false}
-        />
-        <EditableField
-            name='user_first_name'
-            isEditing={isEditing}
-            label="Имя директора"
-            value={formData.user_first_name}
-            error={formErrors.user_first_name}
-            helperText='Заполните имя директора'
-            onChange={handleChange}
-            disabled={formLoading}
-            isReq={true}
-        />
-        <EditableField
-            name='user_last_name'
-            isEditing={isEditing}
-            label="Фамилия директора"
-            value={formData.user_last_name}
-            error={formErrors.user_last_name}
-            helperText='Заполните фамилию директора'
-            onChange={handleChange}
-            disabled={formLoading}
-            isReq={true}
-        />
-        <EditableField
-            name='user_email'
-            isEditing={isEditing}
-            label="Почта"
-            value={formData.user_email}
-            error={formErrors.user_email}
-            helperText='Введите корректную почту'
-            onChange={handleChange}
-            disabled={formLoading}
-            isReq={true}
-        />
-    </WhiteBox>
-    </div>)
+            <WhiteBox headerText={`Сервисная организация ID:${id}`}>
+                <EditableField
+                    name='username'
+                    isEditing={false}
+                    label="username"
+                    value={formData.username}
+                />
+                <EditableField
+                    name='name'
+                    isEditing={isEditing}
+                    label="Название"
+                    value={formData.name}
+                    error={formErrors.name}
+                    helperText='Заполните название'
+                    onChange={handleChange}
+                    disabled={formLoading}
+                    isReq={true}
+                />
+                <EditableField
+                    name='description'
+                    isEditing={isEditing}
+                    label="Описание"
+                    value={formData.description}
+                    onChange={handleChange}
+                    disabled={formLoading}
+                    isReq={false}
+                />
+                <EditableField
+                    name='user_first_name'
+                    isEditing={isEditing}
+                    label="Имя директора"
+                    value={formData.user_first_name}
+                    error={formErrors.user_first_name}
+                    helperText='Заполните имя директора'
+                    onChange={handleChange}
+                    disabled={formLoading}
+                    isReq={true}
+                />
+                <EditableField
+                    name='user_last_name'
+                    isEditing={isEditing}
+                    label="Фамилия директора"
+                    value={formData.user_last_name}
+                    error={formErrors.user_last_name}
+                    helperText='Заполните фамилию директора'
+                    onChange={handleChange}
+                    disabled={formLoading}
+                    isReq={true}
+                />
+                <EditableField
+                    name='user_email'
+                    isEditing={isEditing}
+                    label="Почта"
+                    value={formData.user_email}
+                    error={formErrors.user_email}
+                    helperText='Введите корректную почту'
+                    onChange={handleChange}
+                    disabled={formLoading}
+                    isReq={true}
+                />
+                {role==='Менеджер'&&
+                    <div className="formButtons">
+                        <Button onClick={handleButton}
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={isEditing?!isValid():formLoading} >
+                            {formLoading?<CircularProgress/>:isEditing?<>Сохранить</>:<>Изменить</>}
+                        </Button>
+                        {isEditing?
+                            <Button onClick={()=>{setIsEditing(false); setFormData(fetchedData)}}
+                                variant="contained"
+                                color="primary">
+                                Отменить
+                            </Button>
+                        :
+                            <Button onClick={resetPassword}
+                                variant="contained"
+                                color="primary"
+                                disabled={formLoading} >
+                                {formLoading?<CircularProgress/>:'Сбросить пароль'}
+                            </Button>
+                        }
+                        
+                        
+                    </div>}
+            </WhiteBox>
+            
+        </div>)
 }
 
 export default CheckService

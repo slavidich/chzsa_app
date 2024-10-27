@@ -7,7 +7,6 @@ import Footer from './footer.jsx'
 
 import { checkAuthStatus } from './authUtils';
 import { Navigate } from "react-router-dom";
-import AddUser from "./users/AddUser";
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
 const MainPage = React.lazy(()=> import('./mainPage.jsx'))
@@ -17,8 +16,11 @@ const AddDirectory = React.lazy(()=>import('./directories/AddDirectory.jsx'))
 const CheckDirectory = React.lazy(()=>import('./directories/CheckDirectory.jsx'))
 
 const Users = React.lazy(()=>import('./users/users.jsx'))
+const AddUser = React.lazy(()=>import('./users/AddUser.jsx'))
 const CheckUser = React.lazy(()=>import('./users/CheckUser.jsx'))
+
 const Cars = React.lazy(()=>import('./cars/cars.jsx'))
+const AddCar = React.lazy(()=>import('./cars/addCar.jsx'))
 
 const Services = React.lazy(()=>import('./services/services.jsx'))
 const AddService = React.lazy(()=>import('./services/AddService.jsx'))
@@ -67,8 +69,11 @@ function App() {
                     <Route path="/services" element={<ProtectedRoute requiredRole='Менеджер'><Services/></ProtectedRoute>}/>
                     <Route path="/services/new" element={<ProtectedRoute requiredRole='Менеджер'><AddService/></ProtectedRoute>}/>
                     <Route path="/services/:id" element={<ProtectedRoute requiredRole='Менеджер'><CheckService/></ProtectedRoute>}/>
-                    <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     <Route path="/cars" element={<Cars/>} />
+                    <Route path="/cars/new" element={<AddCar/>} />
+
+                    <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
+                    
                     
                     
                 </Routes>

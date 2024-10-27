@@ -1,6 +1,12 @@
 import React, {useState} from "react";
+import { FormControl, TextField } from "@mui/material";
 
+import { mainAddress } from "../app";
+import WhiteBox from "../WhiteBox.jsx";
+import { EditableField, AutoCompleteSearch } from "../muiUtil";
+import {  Button, CircularProgress } from "@mui/material";
 function AddCar(){
+    const [formLoading, setFormLoading] = useState(false)
     const [formData, setFormData] = useState({
         serial_number: '',
         technique_model: null,
@@ -18,8 +24,9 @@ function AddCar(){
         delivery_address: '',
         equipment: '',
         client: null,
+        
     });
-    const [errors, setErrors] = useState({
+    const [formErrors, setFormErrors] = useState({
         serial_number: false,
         technique_model: false,
         engine_model: false,
@@ -37,41 +44,72 @@ function AddCar(){
         equipment: false,
         client: false,
     })
-    const handleInputChange = (e) => {
+    const handleChange = (e) => {
         const { name, value } = e.target;
-         setFormData(prevState => ({
-            ...prevState,
-            [name]: value
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value
         }));
+        validateField(name, value)
     };
-    const handleSubmit = (e) => {
+    const validateField=(name, value)=>{
+        console.log(name, value)
+        let isValid = true;
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+            isValid = false;
+        }
+        setFormErrors({
+            ...formErrors,
+            [name]: !isValid
+        });
+    }
+    const handleAdd = (e) => {
         e.preventDefault();
-        console.log(formData)
     };
+    const isValid = ()=>{
+        return Object.values(formData).every((value) => value !== null && value !== '');
+    }
     return (
     <div>
-        <button onClick={()=>setAddCar(false)}>Вернуться</button>
-        <form onSubmit={handleSubmit}>
-            <FormControl fullWidth margin="normal">
-                <TextField 
-                    name="serial_number"
-                    label="Зав. № машины:" 
-                    variant="outlined" 
-                    value={formData.serial_number} 
-                    onChange={handleInputChange} 
+        <WhiteBox headerText='Добавление клиента'>
+            <form onSubmit={handleAdd}>
+                <EditableField
+                    isEditing={true}
+                    label='Зав. № машины:'
+                    name='serial_number'
+                    value={formData.serial_number}
+                    error={formErrors.serial_number}
+                    helperText='Заполните поле'
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
                 />
-            </FormControl>
-            <FormControl fullWidth margin="normal">
                 <AutoCompleteSearch
+                    isEditing={true}
                     label="Модель двигателя"
                     name="technique_model"
-                    endpoint={`${mainAddress}/api/searchdirectories?entity_name=TECHNIQUE_MODEL`}
-                    setData={setFormData}
-                    setFormError={setErrors}
+                    value={formData.technique_model}
+                    error={formErrors.technique_model}
+                    helperText='Заполните поле'
+                    endpoint={`${mainAddress}/api/search?model=directory&entity_name=TECHNIQUE_MODEL`}
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
                 />
-            </FormControl>
-            <button type="submit" onClick={handleSubmit}>Добавить</button>
-        </form>
+                
+                <div className="formButtons">
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        disabled={!isValid()||formLoading} >
+                        {formLoading?<CircularProgress/>:<>Добавить</>}
+                    </Button>
+                    <button onClick={()=>console.log(formData)}>тест</button>
+                </div>
+            </form>
+        </WhiteBox>
+        
     </div>)
 }
 

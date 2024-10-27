@@ -218,21 +218,23 @@ def get_directory(request, id):
         return get403()
     return get_item_by_id(request, Directory, DirectorySerializer, id)
 
-@api_view(['GET']) # поиск директорий для autocomplete полей
-def searchdirectories(request):
-    entity_name = request.query_params.get('entity_name', None)
-    search_term = request.query_params.get('search', None)
-    if not entity_name:
-        return Response({'error': 'Entity name is required'}, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET']) # поиск для ВСЕГО autocomplete полей
+def searchdata(request):
+    model = request.query_params.get('model')
+    if model=='directory':
+        entity_name = request.query_params.get('entity_name', None)
+        search_term = request.query_params.get('search', None)
+        if not entity_name:
+            return Response({'error': 'Entity name is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Фильтрация по entity_name
-    directory_items = Directory.objects.filter(entity_name=entity_name)
+            # Фильтрация по entity_name
+        directory_items = Directory.objects.filter(entity_name=entity_name)
 
-    # Если передан параметр search, фильтруем по имени
-    if search_term:
-        directory_items = directory_items.filter(name__icontains=search_term)
-    serializer = DirectorySerializer(directory_items, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+        # Если передан параметр search, фильтруем по имени
+        if search_term:
+            directory_items = directory_items.filter(name__icontains=search_term)
+        serializer = DirectorySerializer(directory_items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST', 'PUT']) # api/users
 def users(request):
@@ -286,18 +288,12 @@ def updatePassword(request):
         return get403()
     data = request.data
     userid = data.get('id')
+    if not userid:
+        username = data.get('username')
+        user = User.objects.get(username=username)
+        sendEmailResetPassword.delay(user.id)
+        return Response('', status=status.HTTP_200_OK)
     sendEmailResetPassword.delay(userid)
-    return Response('', status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def updatePasswordUsername(request):
-    role_check = get_role_from_request(request)
-    if role_check != 'Менеджер':
-        return get403()
-    data = request.data
-    username = data.get('username')
-    user = User.objects.get(username=username)
-    sendEmailResetPassword.delay(user.id)
     return Response('', status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST', 'PUT']) # api/services
@@ -373,6 +369,15 @@ def get_service_id(request, id):
     return get_item_by_id(request, Service, ServiceSerializer, id)
 
     #return Response('', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST', 'PUT'])
+def cars(request):
+    role_check = get_role_from_request(request)
+    if request.method == 'GET':
+        if role_check=='Менеджер':
+            sort_field = request.query_params.get('sortField', 'id')
+            search_field = request.query_params.get('searchField', None)
+            return paginate_queryset(Machine, request, ServiceSerializer, search_field=search_field, sort_field=sort_field)
 
 
 @api_view(['POST'])

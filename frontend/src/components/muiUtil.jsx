@@ -1,8 +1,8 @@
 import { createTheme } from '@mui/material/styles';
-import React from 'react';
-import { TextField, Typography, Box, FormControl, Select, MenuItem } from '@mui/material';
+import React, {useState, useRef, useEffect} from 'react';
+import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete } from '@mui/material';
 import { useNavigate, useLocation } from "react-router-dom";
-
+import axios from 'axios';
 export const theme = createTheme({
     typography: {
         fontFamily: [
@@ -96,5 +96,81 @@ export const EditableSelectField = ({isEditing,name, label, value,
 
     </FormControl>
   )                                  
+}
 
+export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false})=>{
+    const [options, setOptions] = useState([]);
+    const [loadingState, setLoadingState] = useState(false);
+    const [inputError, setInputError] = useState(false);
+    const searchTimeout = useRef(null);
+
+    const getOptions = async (searchValue) => {
+        setLoadingState(true);
+        try {
+            const response = await axios.get(`${endpoint}&search=${searchValue}`, { withCredentials: true });
+                setOptions(response.data);
+            } catch (error) {
+                console.error('Ошибка при загрузке данных:', error);
+            } finally {
+                setLoadingState(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isEditing) {
+            getOptions('');
+        }
+    }, [isEditing]);
+
+    const handleSearch = (event, value) => {
+        setOptions([]);
+        setLoadingState(true);
+        if (searchTimeout.current) {
+            clearTimeout(searchTimeout.current);
+        }
+        searchTimeout.current = setTimeout(() => {
+            if (value.length >= 1 || value === '') {
+                getOptions(value);
+            }
+        }, 500);
+    };
+    const handleChange = (event, newValue) => {
+        const e = {
+            target: {
+                value: newValue ? newValue.id : undefined,
+                name: name || null,
+            },
+        };
+        onChange(e)
+    };
+    return(
+        <FormControl fullWidth margin="normal">
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>{label}{isReq&&isEditing?<RequiredStar/>:<></>}</Typography>
+            {isEditing?
+                <Autocomplete
+                    options={options}
+                    getOptionLabel={(option) => option.name || ''}
+                    loading={loadingState}
+                    noOptionsText="Нет вариантов"
+                    loadingText="Загрузка..."
+                    onInputChange={handleSearch}
+                    onChange={handleChange}
+                    
+                    disabled={loading}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            fullWidth
+                            error={inputError || error}
+                            helperText={error && helperText}
+                        />
+                    )}
+                />
+            :
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                {value}
+            </Typography>
+            }
+    </FormControl>
+    )
 }
