@@ -86,7 +86,7 @@ function AddCar(){
                 />
                 <AutoCompleteSearch
                     isEditing={true}
-                    label="Модель двигателя"
+                    label="Модель техники"
                     name="technique_model"
                     value={formData.technique_model}
                     error={formErrors.technique_model}
