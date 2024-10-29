@@ -4,9 +4,11 @@ import '../../styles/cars.scss'
 
 import { mainAddress } from "../app";
 import WhiteBox from "../WhiteBox.jsx";
-import { EditableField, AutoCompleteSearch } from "../muiUtil";
+import { EditableField, AutoCompleteSearch, EditableDateField } from "../muiUtil";
 import {  Button, CircularProgress } from "@mui/material";
 function AddCar(){
+    const now = new Date()
+    const [year, month, date] = [now.getFullYear(), now.getMonth(), now.getDate()]
     const [formLoading, setFormLoading] = useState(false)
     const [formData, setFormData] = useState({
         serial_number: '',
@@ -20,7 +22,7 @@ function AddCar(){
         steered_axle_model: null,
         steered_axle_serial_number: '',
         delivery_contract_number: '',
-        shipping_date: '',
+        shipping_date: new Date(year, month, date),
         cargo_receiver: '',
         delivery_address: '',
         equipment: '',
@@ -39,7 +41,7 @@ function AddCar(){
         steered_axle_model: false,
         steered_axle_serial_number: false,
         delivery_contract_number: false,
-        shipping_date: false,
+        shipping_date: true,
         cargo_receiver: false,
         delivery_address: false,
         equipment: false,
@@ -54,7 +56,6 @@ function AddCar(){
         validateField(name, value)
     };
     const validateField=(name, value)=>{
-        console.log(name, value)
         let isValid = true;
         if (!value || (typeof value === 'string' && value.trim() === '')) {
             isValid = false;
@@ -194,7 +195,30 @@ function AddCar(){
                     loading={formLoading}
                     isReq={true}
                 />
-                
+                {/* Договор поставки №, дата */}
+                <EditableField
+                    isEditing={true}
+                    label='Договор поставки №, дата'
+                    name='delivery_contract_number'
+                    value={formData.delivery_contract_number}
+                    error={formErrors.delivery_contract_number}
+                    helperText='Заполните поле'
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
+                />
+                {/* Дата отгрузки с завода */}
+                <EditableDateField
+                    isEditing={true}
+                    label='Дата отгрузки с завода'
+                    name='shipping_date'
+                    value={formData.shipping_date}
+                    error={formErrors.shipping_date}
+                    helperText='Заполните поле'
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
+                />
                 <div className="formButtons">
                     <Button
                         type="submit"

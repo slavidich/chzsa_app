@@ -3,6 +3,13 @@ import React, {useState, useRef, useEffect} from 'react';
 import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete, Paper } from '@mui/material';
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from 'axios';
+
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import ruLocale from 'date-fns/locale/ru';
+
+
 export const theme = createTheme({
     typography: {
         fontFamily: [
@@ -97,6 +104,46 @@ export const EditableSelectField = ({isEditing,name, label, value,
     </FormControl>
   )                                  
 }
+
+export const EditableDateField  =React.memo(({isEditing, label, name, value, error, helperText, onChange, loading, isReq=false}) =>{
+    console.log(error)
+    const handleChange = (event, newValue) => {
+        const e = {
+            target: {
+                value: event,
+                name: name || null,
+            },
+        };
+        onChange(e)
+    };
+    return (
+        <FormControl fullWidth margin="normal">
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>{label}{isReq&&isEditing?<RequiredStar/>:<></>}</Typography>
+                {isEditing?
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ruLocale}>
+                        <DatePicker
+                            name={name}
+                            value={value}
+                            onChange={handleChange}
+                            disabled={loading}
+                            required={isReq}
+                            format="dd.MM.yyyy"
+                            slotProps={{
+                                textField: {
+                                    error: error,
+                                    helperText: error&&helperText
+                                }
+                            }}
+                        />
+                  </LocalizationProvider>
+            :
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                {new Date(value).toLocaleDateString()}
+            </Typography>
+            }
+        </FormControl>
+    )
+})
 
 export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false})=>{
     const [options, setOptions] = useState([]);
