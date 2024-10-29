@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 import React, {useState, useRef, useEffect} from 'react';
-import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete } from '@mui/material';
+import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete, Paper } from '@mui/material';
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from 'axios';
 export const theme = createTheme({
@@ -123,6 +123,7 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
     }, [isEditing]);
 
     const handleSearch = (event, value) => {
+        value===''?setInputError(true):setInputError(false)
         setOptions([]);
         setLoadingState(true);
         if (searchTimeout.current) {
@@ -157,17 +158,40 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
                     onChange={handleChange}
                     
                     disabled={loading}
+                    PaperComponent={(params) => (
+                        <Paper 
+                            {...params} 
+                            sx={{ width: 'auto' }}  // Автоматическая ширина выпадающего списка
+                        />
+                    )}
                     renderInput={(params) => (
                         <TextField
                             {...params}
-                            fullWidth
                             error={inputError || error}
-                            helperText={error && helperText}
+                            helperText={(error||inputError) && helperText}
+                            sx={{ 
+                                whiteSpace: 'normal', // Позволяет тексту переноситься на новую строку
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitBoxOrient: 'vertical',
+                                WebkitLineClamp: 2, // Ограничение по числу строк
+                            }}
                         />
                     )}
                 />
             :
-            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+            <Typography 
+                variant="body1" 
+                sx={{ 
+                    color: 'text.secondary',
+                    whiteSpace: 'normal', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    display: '-webkit-box',
+                    WebkitBoxOrient: 'vertical',
+                    WebkitLineClamp: 2, // Две строки текста максимум
+                }}>
                 {value}
             </Typography>
             }

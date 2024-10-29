@@ -1,13 +1,18 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import Directory, Service
+from .models import Directory, Service, Machine
 from django.contrib.auth.models import User, Group
 
 class DirectorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Directory
         fields = ['id', 'entity_name', 'name', 'description']
+
+class SearchDirectorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Directory
+        fields = ['id', 'name']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,3 +38,9 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     def get_user_email(self, obj):
         return obj.user.email if obj.user else None
+
+
+class MachineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Machine
+        fields = ['id', 'serial_number', 'technique_model', 'client']

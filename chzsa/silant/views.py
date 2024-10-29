@@ -15,7 +15,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from .tasks import sendEmailResetPassword
-from .serializers import DirectorySerializer, UserSerializer, ServiceSerializer
+from .serializers import *
 from .models import *
 
 from chzsa import settings
@@ -233,7 +233,7 @@ def searchdata(request):
         # Если передан параметр search, фильтруем по имени
         if search_term:
             directory_items = directory_items.filter(name__icontains=search_term)
-        serializer = DirectorySerializer(directory_items, many=True)
+        serializer = SearchDirectorySerializer(directory_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST', 'PUT']) # api/users
