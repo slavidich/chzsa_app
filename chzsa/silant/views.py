@@ -235,6 +235,12 @@ def searchdata(request):
             directory_items = directory_items.filter(name__icontains=search_term)
         serializer = SearchDirectorySerializer(directory_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    elif model=='client':
+        search_term = request.query_params.get('search', None)
+        users = User.objects.filter(Q(username__contains='client')&(Q(username__contains=search_term)|Q(first_name__contains=search_term)|Q(last_name__contains=search_term))).order_by('id')
+        serializer = SearchUserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET', 'POST', 'PUT']) # api/users
 def users(request):
@@ -376,9 +382,31 @@ def cars(request):
     if request.method == 'GET':
         if role_check=='Менеджер':
             sort_field = request.query_params.get('sortField', 'id')
+            if sort_field=='username':
+                sort_field='client__username'
+            elif sort_field == 'technique_model':
+                sort_field = 'technique_model__name'
             search_field = request.query_params.get('searchField', None)
-            return paginate_queryset(Machine, request, ServiceSerializer, search_field=search_field, sort_field=sort_field)
+            if search_field=='username':
+                search_field='client__username'
+            elif search_field=='technique_model':
+                search_field='technique_model__name'
+            return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field, sort_field=sort_field)
+        else: get403()
+    if request.method=='POST':
+        if role_check=='Менеджер':
+            serializer = AddMachineSerializer(data=request.data)
+            if serializer.is_valid():
+                machine = serializer.save()
+                return Response('Машина добавлена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else: get403()
 
+@api_view(['GET'])
+def get_car_id(request, id):
+    role_check = get_role_from_request(request)
+    get_item_by_id(request, Machine, AddMachineSerializer, id)
 
 @api_view(['POST'])
 def create_user(request):

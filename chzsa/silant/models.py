@@ -56,7 +56,7 @@ class Machine(models.Model): # Машина
     shipping_date = models.DateField(verbose_name='Дата отгрузки с завода')
     cargo_receiver = models.CharField(max_length=255, verbose_name='Грузополучатель')
     delivery_address = models.TextField(verbose_name='Адрес поставки (эксплуатации)')
-    equipment = models.TextField(verbose_name='Комплетакция (доп. опции)')
+    equipment = models.TextField(verbose_name='Комплетакция (доп. опции)', blank=True, null=True)
     client = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Клиент', related_name='machines')
 
     def __str__(self):

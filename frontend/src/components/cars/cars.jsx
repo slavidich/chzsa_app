@@ -13,10 +13,9 @@ function Cars(){
             <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},
-                    {field: "username", header: "username", maxLength:10},
-                    {field: "first_name", header: "Имя", maxLength:10},
-                    {field: "last_name", header: "Фамилия", maxLength:10, hideWhenWidth:900},
-                    {field: "email", header: "Email", maxLength:10, hideWhenWidth:1200},
+                    {field: "serial_number", header: "Зав. № машины", maxLength:10},
+                    {field: "technique_model", header: "Модель техники", maxLength:20, hideWhenWidth:900},
+                    {field: "username", header: "Клиент", maxLength:10},,
                 ]}
                 path='/api/cars'
                 dispatch={dispatch}

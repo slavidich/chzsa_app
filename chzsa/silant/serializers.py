@@ -19,6 +19,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'first_name', 'last_name', 'email', 'username']
 
+class SearchUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name']
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        full_name = f'{instance.username} {instance.last_name if instance.last_name else ""} {instance.first_name[0]+"." if instance.first_name else ""}'
+        representation['name'] = full_name
+        return representation
 
 class ServiceSerializer(serializers.ModelSerializer):
     user_first_name = serializers.SerializerMethodField()
@@ -41,6 +50,16 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 
 class MachineSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    technique_model = serializers.SerializerMethodField()
     class Meta:
         model = Machine
-        fields = ['id', 'serial_number', 'technique_model', 'client']
+        fields = ['id', 'serial_number', 'technique_model', 'username']
+    def get_username(self, obj):
+        return obj.client.username
+    def get_technique_model(self, obj):
+        return obj.technique_model.name
+class AddMachineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Machine
+        fields = '__all__'

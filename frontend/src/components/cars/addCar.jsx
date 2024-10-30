@@ -1,15 +1,22 @@
-import React, {useState} from "react";
-import { FormControl, TextField } from "@mui/material";
+import React, {useState, useEffect} from "react";
 import '../../styles/cars.scss'
-
+import { refreshTokenIfNeeded } from "../authUtils";
+import { useDispatch } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { mainAddress } from "../app";
 import WhiteBox from "../WhiteBox.jsx";
 import { EditableField, AutoCompleteSearch, EditableDateField } from "../muiUtil";
 import {  Button, CircularProgress } from "@mui/material";
-function AddCar(){
+import axios from "axios";
+
+function AddCar(props){
     const now = new Date()
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const location = useLocation();
     const [year, month, date] = [now.getFullYear(), now.getMonth(), now.getDate()]
-    const [formLoading, setFormLoading] = useState(false)
+    const [isEditing, setIsEditing] = useState(props.check?false:true)
+    const [formLoading, setFormLoading] = useState(props.check?true:false)
     const [formData, setFormData] = useState({
         serial_number: '',
         technique_model: null,
@@ -27,7 +34,6 @@ function AddCar(){
         delivery_address: '',
         equipment: '',
         client: null,
-        
     });
     const [formErrors, setFormErrors] = useState({
         serial_number: false,
@@ -41,11 +47,19 @@ function AddCar(){
         steered_axle_model: false,
         steered_axle_serial_number: false,
         delivery_contract_number: false,
-        shipping_date: true,
+        shipping_date: false,
         cargo_receiver: false,
         delivery_address: false,
         equipment: false,
         client: false,
+    })
+    const getData = async()=>{
+        console.log('test')
+    }
+    useEffect(()=>{
+        if (props.check){
+            getData()
+        }
     })
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -65,18 +79,48 @@ function AddCar(){
             [name]: !isValid
         });
     }
-    const handleAdd = (e) => {
-        e.preventDefault();
+    const handleAdd = async (e) => {
+        if (!props.check){
+            e.preventDefault()
+            setFormLoading(true)
+            await refreshTokenIfNeeded(dispatch)
+            try {
+                await axios.post(`${mainAddress}/api/cars`, { ...formData, shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
+                const response = await axios.get(`${mainAddress}/api/cars`, {withCredentials:true})
+                if (response.data.last_page){
+                    navigate(`/cars?page=${response.data.last_page}`)
+                }else{
+                    navigate(`/cars?page=1`)
+                }
+                setFormLoading(false)
+            } catch (error) {
+                alert(error);
+                setFormLoading(false)
+            }
+        } else{
+            e.preventDefault()
+            console.log('мы просматриваем только')
+        }
+        
     };
-    const isValid = ()=>{
-        return Object.values(formData).every((value) => value !== null && value !== '');
-    }
+    const isValid = () => {
+        const allFields = Object.keys(formData);
+        const requiredFields = allFields.filter(field => field !== 'equipment');
+
+        for (const field of requiredFields) {
+            if (!formData[field] || formData[field] === '') {
+                return false;
+            }
+        }
+    
+        return true;
+    };
     return (
     <div className="cars">
         <WhiteBox headerText='Добавление клиента'>
             <form onSubmit={handleAdd}>
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Зав. № машины:'
                     name='serial_number'
                     value={formData.serial_number}
@@ -88,7 +132,7 @@ function AddCar(){
                 />
                 {/* Модель техники TECHNIQUE_MODEL*/}
                 <AutoCompleteSearch
-                    isEditing={true}
+                    isEditing={isEditing}
                     label="Модель техники"
                     name="technique_model"
                     value={formData.technique_model}
@@ -101,7 +145,7 @@ function AddCar(){
                 />
                 {/* Модель двигателя  ENGINE_MODEL */}
                 <AutoCompleteSearch
-                    isEditing={true}
+                    isEditing={isEditing}
                     label="Модель двигателя"
                     name="engine_model"
                     value={formData.engine_model}
@@ -113,7 +157,7 @@ function AddCar(){
                     isReq={true}
                 />
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Зав. № двигателя:'
                     name='engine_serial_number'
                     value={formData.engine_serial_number}
@@ -125,7 +169,7 @@ function AddCar(){
                 />
                 {/* Модель трансмиссии  TRANSMISSION_MODEL */}
                 <AutoCompleteSearch
-                    isEditing={true}
+                    isEditing={isEditing}
                     label="Модель трансмиссии"
                     name="transmission_model"
                     value={formData.transmission_model}
@@ -137,7 +181,7 @@ function AddCar(){
                     isReq={true}
                 />
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Зав. № трансмиссии:'
                     name='transmission_serial_number'
                     value={formData.transmission_serial_number}
@@ -149,7 +193,7 @@ function AddCar(){
                 />
                  {/* Модель ведущего моста  DRIVEN_AXLE_MODEL */}
                 <AutoCompleteSearch
-                    isEditing={true}
+                    isEditing={isEditing}
                     label="Модель ведущего моста"
                     name="driven_axle_model"
                     value={formData.driven_axle_model}
@@ -161,7 +205,7 @@ function AddCar(){
                     isReq={true}
                 />
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Зав. № ведущего моста:'
                     name='driven_axle_serial_number'
                     value={formData.driven_axle_serial_number}
@@ -173,7 +217,7 @@ function AddCar(){
                 />
                 {/* Модель управляемого моста   STEERED_AXLE_MODEL */}
                 <AutoCompleteSearch
-                    isEditing={true}
+                    isEditing={isEditing}
                     label="Модель управляемого моста"
                     name="steered_axle_model"
                     value={formData.steered_axle_model}
@@ -185,7 +229,7 @@ function AddCar(){
                     isReq={true}
                 />
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Зав. № управляемого моста:'
                     name='steered_axle_serial_number'
                     value={formData.steered_axle_serial_number}
@@ -197,7 +241,7 @@ function AddCar(){
                 />
                 {/* Договор поставки №, дата */}
                 <EditableField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Договор поставки №, дата'
                     name='delivery_contract_number'
                     value={formData.delivery_contract_number}
@@ -209,7 +253,7 @@ function AddCar(){
                 />
                 {/* Дата отгрузки с завода */}
                 <EditableDateField
-                    isEditing={true}
+                    isEditing={isEditing}
                     label='Дата отгрузки с завода'
                     name='shipping_date'
                     value={formData.shipping_date}
@@ -219,15 +263,70 @@ function AddCar(){
                     loading={formLoading}
                     isReq={true}
                 />
+                {/* грузополучатель */}
+                <EditableField
+                    isEditing={isEditing}
+                    label='Грузополучатель (конечный потреб.)'
+                    name='cargo_receiver'
+                    value={formData.cargo_receiver}
+                    error={formErrors.cargo_receiver}
+                    helperText='Заполните поле'
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
+                />
+                {/* Адрес поставки */}
+                <EditableField
+                    isEditing={isEditing}
+                    label='Адрес поставки'
+                    name='delivery_address'
+                    value={formData.delivery_address}
+                    error={formErrors.delivery_address}
+                    helperText='Заполните поле'
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
+                />
+                {/* Комплектация */}
+                <EditableField
+                    isEditing={isEditing}
+                    label='Комплектация'
+                    name='equipment'
+                    value={formData.equipment}
+                    onChange={handleChange}
+                    loading={formLoading}
+                    multiline={true}
+                />
+                {/* КЛИЕНТ */}
+                <AutoCompleteSearch
+                    isEditing={isEditing}
+                    label="Клиент"
+                    name="client"
+                    value={formData.client}
+                    error={formErrors.client}
+                    helperText='Заполните поле'
+                    endpoint={`${mainAddress}/api/search?model=client`}
+                    onChange={handleChange}
+                    loading={formLoading}
+                    isReq={true}
+                />
                 <div className="formButtons">
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={!isValid()||formLoading} >
-                        {formLoading?<CircularProgress/>:<>Добавить</>}
-                    </Button>
-                    <button onClick={()=>console.log(formData)}>тест</button>
+                    {!props.check?
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={!isValid()||formLoading} >
+                            {formLoading?<CircularProgress/>:<>Добавить</>}
+                        </Button>
+                    :
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={formLoading}>
+                                Изменить    
+                        </Button>}
                 </div>
             </form>
         </WhiteBox>

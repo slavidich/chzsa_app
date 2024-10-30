@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/services/<int:id>', get_service_id, name='services'),
 
     path('api/cars', cars, name='cars'),
+    path('api/cars/<int:id>', get_car_id, name='services'),
 
     path('api/search',searchdata, name='search' ),
 

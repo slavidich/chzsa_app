@@ -70,7 +70,8 @@ function App() {
                     <Route path="/services/new" element={<ProtectedRoute requiredRole='Менеджер'><AddService/></ProtectedRoute>}/>
                     <Route path="/services/:id" element={<ProtectedRoute requiredRole='Менеджер'><CheckService/></ProtectedRoute>}/>
                     <Route path="/cars" element={<Cars/>} />
-                    <Route path="/cars/new" element={<AddCar/>} />
+                    <Route path="/cars/new" element={<ProtectedRoute requiredRole='Менеджер'><AddCar/></ProtectedRoute>} />
+                    <Route path="/cars/:id" element={<AddCar check={true}/>} />
 
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     

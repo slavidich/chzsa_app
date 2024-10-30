@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 import React, {useState, useRef, useEffect} from 'react';
 import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete, Paper } from '@mui/material';
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from 'axios';
 
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -67,6 +67,7 @@ export const EditableField = ({isEditing,name, label, value,
               helperText={error && helperText}
               disabled={loading}
               required={isReq}
+              multiline={multiline}
           />
         :
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
@@ -74,7 +75,7 @@ export const EditableField = ({isEditing,name, label, value,
           </Typography>
         }
     </FormControl>
-  )
+    )
 }
 
 export const EditableSelectField = ({isEditing,name, label, value, 
@@ -106,7 +107,6 @@ export const EditableSelectField = ({isEditing,name, label, value,
 }
 
 export const EditableDateField  =React.memo(({isEditing, label, name, value, error, helperText, onChange, loading, isReq=false}) =>{
-    console.log(error)
     const handleChange = (event, newValue) => {
         const e = {
             target: {
@@ -145,7 +145,7 @@ export const EditableDateField  =React.memo(({isEditing, label, name, value, err
     )
 })
 
-export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false})=>{
+export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false, canCheck=false})=>{
     const [options, setOptions] = useState([]);
     const [loadingState, setLoadingState] = useState(false);
     const [inputError, setInputError] = useState(false);
@@ -239,7 +239,13 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
                     WebkitBoxOrient: 'vertical',
                     WebkitLineClamp: 2, // Две строки текста максимум
                 }}>
-                {value}
+                    {canCheck ? (
+                        <Link to={`${endpoint}/${value}`}>
+                            {value}
+                        </Link>
+                    ) : (
+                        value
+                    )}
             </Typography>
             }
     </FormControl>

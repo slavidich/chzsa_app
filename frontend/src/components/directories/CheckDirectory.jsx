@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { refreshTokenIfNeeded } from "../authUtils.js";
 import axios from "axios";
+import '../../styles/directories.scss'
 import { mainAddress } from "../app.jsx";
 import { useParams } from 'react-router-dom';
 import {EditableField, EditableSelectField} from "../muiUtil.jsx";
@@ -92,7 +93,9 @@ function CheckDirectory(){
             setIsEditing(true)
         }
     }
-    return (<WhiteBox headerText={`Справочник ID:${id}`}>
+    return (
+        <div className="directories">
+            <WhiteBox headerText={`Справочник ID:${id}`}>
                 <EditableSelectField
                     name='entity_name'
                     isEditing={isEditing}
@@ -140,6 +143,7 @@ function CheckDirectory(){
                             </Button>}
                     </div>}
             </WhiteBox>
+        </div>
         )
 }
 
