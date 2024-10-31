@@ -79,13 +79,7 @@ function CheckDirectory(){
                 const response = await axios.put(`${mainAddress}/api/directories`,{...formData}, {withCredentials:true})
                 setIsEditing(false)
                 setFormLoading(false)
-                if (fetchedData.entity_name===formData.entity_name){
-                    if(location.state){
-                        navigate(location.state.from)
-                    }
-                }else{
-                    navigate(`/directories?entity_name=${formData.entity_name}`)
-                }
+                
             }catch(error){
                 alert(error);
             }

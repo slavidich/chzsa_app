@@ -24,13 +24,14 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'first_name', 'last_name', 'email', 'username']
 
+
 class SearchUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'first_name', 'last_name']
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        full_name = f'{instance.username} {instance.last_name if instance.last_name else ""} {instance.first_name[0]+"." if instance.first_name else ""}'
+        full_name = f'{instance.username}'
         representation['name'] = full_name
         return representation
 
@@ -57,25 +58,39 @@ class ServiceSerializer(serializers.ModelSerializer):
 class MachineSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     technique_model = serializers.SerializerMethodField()
+    engine_model= serializers.SerializerMethodField()
+    transmission_model= serializers.SerializerMethodField()
+    driven_axle_model= serializers.SerializerMethodField()
+    steered_axle_model= serializers.SerializerMethodField()
     class Meta:
         model = Machine
-        fields = ['id', 'serial_number', 'technique_model', 'username']
+        fields = ['id', 'serial_number', 'technique_model','engine_model','transmission_model','driven_axle_model','steered_axle_model', 'username']
     def get_username(self, obj):
         return obj.client.username
     def get_technique_model(self, obj):
         return obj.technique_model.name
+    def get_engine_model(self, obj):
+        return obj.engine_model.name
+    def get_transmission_model(self, obj):
+        return obj.transmission_model.name
+    def get_driven_axle_model(self, obj):
+        return obj.driven_axle_model.name
+    def get_steered_axle_model(self, obj):
+        return obj.steered_axle_model.name
+
 class AddMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model=Machine
         fields = '__all__'
 
-class MachineViewSerializer(serializers.ModelSerializer):
-    technique_model = DirectorySimpleSerializer()
-    engine_model = DirectorySimpleSerializer()
-    transmission_model = DirectorySimpleSerializer()
-    driven_axle_model = DirectorySimpleSerializer()
-    steered_axle_model = DirectorySimpleSerializer()
+class UserForMachineSerializer(serializers.ModelSerializer):
     class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email']
+class MachineViewSerializer(serializers.ModelSerializer):
+    client = SearchUserSerializer()
+    class Meta:
+        depth = 1
         model = Machine
         fields = [
             'id',

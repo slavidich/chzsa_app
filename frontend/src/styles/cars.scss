@@ -1,7 +1,13 @@
 @import "./colors.scss";
 
 .cars{
+    max-width: 1800px;
+    width:100%;
+    padding: 2vh 2vw;
+    
+}
+.car { 
     .whitebox{
-        max-width: 800px;
+        max-width: 700px;
     }
 }

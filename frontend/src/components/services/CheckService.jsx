@@ -84,11 +84,8 @@ function CheckService(){
                 await refreshTokenIfNeeded(dispatch)
                 setFormLoading(true)
                 const response = await axios.put(`${mainAddress}/api/services`, {...formData}, {withCredentials:true})
-                if(location.state){
-                    navigate(location.state.from)
-                }else{
-                    navigate(`/services?page=1`)
-                }
+                setFormLoading(false)
+                setIsEditing(false)
             } catch(error){
                 alert(error);
                 setFormLoading(false)

@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { mainAddress } from "../app.jsx";
 import WhiteBox from "../WhiteBox.jsx";
-import { EditableField, AutoCompleteSearch, EditableDateField } from "../muiUtil";
+import { EditableField, AutoCompleteSearch, EditableDateField, transformIdsFormData } from "../muiUtil";
 import {  Button, CircularProgress } from "@mui/material";
 import { useParams } from 'react-router-dom';
 import axios from "axios";
@@ -74,22 +74,14 @@ function AddCar(props){
         equipment: false,
         client: false,
     })
-    const nameOrId = (fetchedData, mode='name')=>{
-        return Object.fromEntries(
-            Object.entries(fetchedData).map(([key, value]) => [
-              key,
-              value && typeof value === "object" ? value[mode] : value,
-            ])
-        );
-    }
 
     const getData = async()=>{
         try{
             await refreshTokenIfNeeded(dispatch)
             console.log('use')
             const response=await axios.get(`${mainAddress}/api/cars/${id}`,{withCredentials:true})
-            setFetchedData({...response.data})
-            setFormData({...response.data})
+            setFetchedData({...response.data, shipping_date: new Date(response.data.shipping_date)})
+            setFormData({...response.data, shipping_date: new Date(response.data.shipping_date)})
             setFormLoading(false)
         }catch(error){
             if (error.response && error.response.status === 404) {
@@ -127,7 +119,7 @@ function AddCar(props){
             setFormLoading(true)
             await refreshTokenIfNeeded(dispatch)
             try {
-                await axios.post(`${mainAddress}/api/cars`, { ...formData, shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
+                await axios.post(`${mainAddress}/api/cars`, { ...transformIdsFormData(formData), shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
                 const response = await axios.get(`${mainAddress}/api/cars`, {withCredentials:true})
                 if (response.data.last_page){
                     navigate(`/cars?page=${response.data.last_page}`)
@@ -141,10 +133,30 @@ function AddCar(props){
             }
         } else{
             e.preventDefault()
-            setIsEditing(true)
+            if (isEditing){
+                setFormLoading(true)
+                try {
+
+                    await axios.put(`${mainAddress}/api/cars`, { ...transformIdsFormData(formData), shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
+                    setFetchedData(formData)
+                    setFormLoading(false)
+                } catch (error) {
+                    alert(error);
+                    setFormLoading(false)
+                }
+                setIsEditing(false)
+
+            } else{
+                setIsEditing(true)
+            }
+            
         }
         
     };
+    const cancelEdit = async(e)=>{
+        setFormData(fetchedData)
+        setIsEditing(false)
+    }
     const isValid = () => {
         const allFields = Object.keys(formData);
         const requiredFields = allFields.filter(field => field !== 'equipment');
@@ -159,9 +171,9 @@ function AddCar(props){
     };
 
     return (
-    <div className="cars">
-        <WhiteBox headerText='Добавление клиента'>
-            <form onSubmit={handleAdd}>
+    <div className="car">
+        <WhiteBox headerText={isChecking?`Машина ID:${id}`:'Добавление клиента'}>
+            
                 <EditableField
                     isEditing={isEditing}
                     label='Зав. № машины:'
@@ -197,6 +209,8 @@ function AddCar(props){
                     error={formErrors.engine_model}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=ENGINE_MODEL`}
+                    checkEndPoint={`directories`}
+                    canCheck={true}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
@@ -221,6 +235,8 @@ function AddCar(props){
                     error={formErrors.transmission_model}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=TRANSMISSION_MODEL`}
+                    checkEndPoint={`directories`}
+                    canCheck={true}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
@@ -245,6 +261,8 @@ function AddCar(props){
                     error={formErrors.driven_axle_model}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=DRIVEN_AXLE_MODEL`}
+                    checkEndPoint={`directories`}
+                    canCheck={true}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
@@ -269,6 +287,8 @@ function AddCar(props){
                     error={formErrors.steered_axle_model}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=STEERED_AXLE_MODEL`}
+                    checkEndPoint={`directories`}
+                    canCheck={true}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
@@ -351,6 +371,8 @@ function AddCar(props){
                     error={formErrors.client}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=client`}
+                    checkEndPoint={`users`}
+                    canCheck={true}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
@@ -361,19 +383,30 @@ function AddCar(props){
                             type="submit"
                             variant="contained"
                             color="primary"
+                            onClick={handleAdd}
                             disabled={!isValid()||formLoading} >
                             {formLoading?<CircularProgress/>:<>Добавить</>}
                         </Button>
                     :
-                        <Button
+                        <><Button
                             type="submit"
                             variant="contained"
                             color="primary"
-                            disabled={formLoading}>
-                                Изменить    
-                        </Button>}
+                            onClick={handleAdd}
+                            disabled={!isValid()||formLoading}>
+                                {isEditing?'Сохранить':'Изменить'}    
+                        </Button>
+                        {isEditing?(
+                            <Button 
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                onClick={cancelEdit}
+                                disabled={formLoading}>
+                                    Отменить
+                            </Button>):<></>}</>}
                 </div>
-            </form>
+
         </WhiteBox>
         
     </div>)

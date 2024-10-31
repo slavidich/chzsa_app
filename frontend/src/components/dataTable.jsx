@@ -166,7 +166,8 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
         
     }
     const handleRowClick =(row)=>{
-        navigate(`${row.id}`, {state:{from: location.pathname+location.search}})
+        //navigate(`${row.id}`, {state:{from: location.pathname+location.search}})
+        navigate(`${row.id}`)
     }
 
     const handleChangePage = (event, newPage) => {

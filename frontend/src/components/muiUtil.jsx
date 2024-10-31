@@ -71,7 +71,7 @@ export const EditableField = ({isEditing,name, label, value,
           />
         :
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            {value}
+            {value? value: 'Пусто'}
           </Typography>
         }
     </FormControl>
@@ -154,13 +154,8 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
     const getOptions = async (searchValue) => {
         setLoadingState(true);
         try {
-            if (isEditing && value) {
-                const response = await axios.get(`${endpoint}&search=${value.name || ''}`, { withCredentials: true });
-                setOptions(response.data);
-            } else {
-                const response = await axios.get(`${endpoint}&search=${searchValue}`, { withCredentials: true });
-                setOptions(response.data);
-            }
+            const response = await axios.get(`${endpoint}&search=${searchValue}`, { withCredentials: true });
+            setOptions(response.data);
             } catch (error) {
                 console.error('Ошибка при загрузке данных:', error);
             } finally {
@@ -170,9 +165,9 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
 
     useEffect(() => {
         if (isEditing ) {
-            getOptions('');
+            getOptions('')
         }
-    }, [isEditing, value]);
+    }, [isEditing]);
 
     const handleSearch = (event, value) => {
         value===''?setInputError(true):setInputError(false)
@@ -188,9 +183,10 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
         }, 500);
     };
     const handleChange = (event, newValue) => {
+        
         const e = {
             target: {
-                value: newValue ? newValue.id : undefined,
+                value: newValue ? newValue: undefined,
                 name: name || null,
             },
         };
@@ -201,6 +197,7 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>{label}{isReq&&isEditing?<RequiredStar/>:<></>}</Typography>
             {isEditing?
                 <Autocomplete
+                    value={value|| null}
                     options={options}
                     getOptionLabel={(option) => option.name || ''}
                     loading={loadingState}
@@ -208,7 +205,6 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
                     loadingText="Загрузка..."
                     onInputChange={handleSearch}
                     onChange={handleChange}
-                    
                     disabled={loading}
                     PaperComponent={(params) => (
                         <Paper 
@@ -255,4 +251,20 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
             }
     </FormControl>
     )
+}
+
+export const transformIdsFormData = (formData) =>{
+    const result = {};
+    for (const key in formData) {
+        if (formData.hasOwnProperty(key)) {
+            const value = formData[key];
+            if (value && typeof value === 'object' && 'id' in value) {
+                result[key] = value.id;
+            } 
+            else {
+                result[key] = value;
+            }
+        }
+    }
+    return result;
 }

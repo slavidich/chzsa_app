@@ -386,19 +386,46 @@ def cars(request):
                 sort_field='client__username'
             elif sort_field == 'technique_model':
                 sort_field = 'technique_model__name'
+            elif sort_field == 'engine_model':
+                sort_field = 'engine_model__name'
+            elif sort_field == 'transmission_model':
+                sort_field = 'transmission_model__name'
+            elif sort_field == 'driven_axle_model':
+                sort_field = 'driven_axle_model__name'
+            elif sort_field == 'steered_axle_model':
+                sort_field = 'steered_axle_model__name'
             search_field = request.query_params.get('searchField', None)
             if search_field=='username':
                 search_field='client__username'
             elif search_field=='technique_model':
                 search_field='technique_model__name'
+            elif search_field=='engine_model':
+                search_field='engine_model__name'
+            elif search_field=='transmission_model':
+                search_field='transmission_model__name'
+            elif search_field=='driven_axle_model':
+                search_field='driven_axle_model__name'
+            elif search_field=='steered_axle_model':
+                search_field='steered_axle_model__name'
             return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field, sort_field=sort_field)
         else: get403()
-    if request.method=='POST':
+    elif request.method=='POST':
         if role_check=='Менеджер':
             serializer = AddMachineSerializer(data=request.data)
             if serializer.is_valid():
                 machine = serializer.save()
                 return Response('Машина добавлена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else: get403()
+    elif request.method == 'PUT':
+        if role_check == 'Менеджер':
+            machine_id = request.data.get('id')
+            machine = get_object_or_404(Machine, id=machine_id)
+            serializer = AddMachineSerializer(machine, data=request.data, partial=True)
+            if serializer.is_valid():
+                machine = serializer.save()
+                return Response('Машина изменена', status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else: get403()

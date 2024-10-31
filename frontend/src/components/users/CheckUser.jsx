@@ -27,9 +27,9 @@ function CheckUser(){
         email: ''
     })
     const [formErrors, setFormErrors] = useState({
-        first_name: '',
-        last_name: '',
-        email: ''
+        first_name: false,
+        last_name: false,
+        email: false
     })
     const handleChange = (e)=>{
         const {name, value} = e.target;
@@ -66,6 +66,7 @@ function CheckUser(){
             setFormData({...response.data})
             setFetchedData({...response.data})
             setFormLoading(false)
+            setIsEditing(false)
         }catch(error){
             if (error.response && error.response.status === 404) {
                 navigate('/404')
@@ -82,11 +83,8 @@ function CheckUser(){
                 await refreshTokenIfNeeded(dispatch)
                 setFormLoading(true)
                 const response = await axios.put(`${mainAddress}/api/users`, {...formData}, {withCredentials:true})
-                if(location.state){
-                    navigate(location.state.from)
-                }else{
-                    navigate(`/users?page=1`)
-                }
+                setFormLoading(false)
+                setIsEditing(false)
             }catch(error){
                 alert(error);
                 setFormLoading(false)
