@@ -3,7 +3,7 @@ import React, {useState, useRef, useEffect} from 'react';
 import { TextField, Typography, Box, FormControl, Select, MenuItem, Autocomplete, Paper } from '@mui/material';
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from 'axios';
-
+import { mainAddress } from './app';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
@@ -145,8 +145,8 @@ export const EditableDateField  =React.memo(({isEditing, label, name, value, err
     )
 })
 
-export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false, canCheck=false})=>{
-    const [options, setOptions] = useState([]);
+export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false, canCheck=false})=>{
+    const [options, setOptions] =useState(isEditing && value ? [value] : []);
     const [loadingState, setLoadingState] = useState(false);
     const [inputError, setInputError] = useState(false);
     const searchTimeout = useRef(null);
@@ -154,8 +154,13 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
     const getOptions = async (searchValue) => {
         setLoadingState(true);
         try {
-            const response = await axios.get(`${endpoint}&search=${searchValue}`, { withCredentials: true });
+            if (isEditing && value) {
+                const response = await axios.get(`${endpoint}&search=${value.name || ''}`, { withCredentials: true });
                 setOptions(response.data);
+            } else {
+                const response = await axios.get(`${endpoint}&search=${searchValue}`, { withCredentials: true });
+                setOptions(response.data);
+            }
             } catch (error) {
                 console.error('Ошибка при загрузке данных:', error);
             } finally {
@@ -164,10 +169,10 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
     };
 
     useEffect(() => {
-        if (isEditing) {
+        if (isEditing ) {
             getOptions('');
         }
-    }, [isEditing]);
+    }, [isEditing, value]);
 
     const handleSearch = (event, value) => {
         value===''?setInputError(true):setInputError(false)
@@ -239,12 +244,12 @@ export const AutoCompleteSearch = ({endpoint, isEditing, label, name, value, err
                     WebkitBoxOrient: 'vertical',
                     WebkitLineClamp: 2, // Две строки текста максимум
                 }}>
-                    {canCheck ? (
-                        <Link to={`${endpoint}/${value}`}>
-                            {value}
+                    {canCheck &&value ? (
+                        <Link to={`/${checkEndPoint}/${value.id}`}>
+                            {value.name}
                         </Link>
                     ) : (
-                        value
+                        <></>
                     )}
             </Typography>
             }

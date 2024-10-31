@@ -9,6 +9,11 @@ class DirectorySerializer(serializers.ModelSerializer):
         model = Directory
         fields = ['id', 'entity_name', 'name', 'description']
 
+class DirectorySimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Directory
+        fields = ['id', 'name']
+
 class SearchDirectorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Directory
@@ -63,3 +68,31 @@ class AddMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model=Machine
         fields = '__all__'
+
+class MachineViewSerializer(serializers.ModelSerializer):
+    technique_model = DirectorySimpleSerializer()
+    engine_model = DirectorySimpleSerializer()
+    transmission_model = DirectorySimpleSerializer()
+    driven_axle_model = DirectorySimpleSerializer()
+    steered_axle_model = DirectorySimpleSerializer()
+    class Meta:
+        model = Machine
+        fields = [
+            'id',
+            'serial_number',
+            'technique_model',
+            'engine_model',
+            'engine_serial_number',
+            'transmission_model',
+            'transmission_serial_number',
+            'driven_axle_model',
+            'driven_axle_serial_number',
+            'steered_axle_model',
+            'steered_axle_serial_number',
+            'delivery_contract_number',
+            'shipping_date',
+            'cargo_receiver',
+            'delivery_address',
+            'equipment',
+            'client',
+        ]

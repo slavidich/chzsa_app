@@ -3,20 +3,41 @@ import '../../styles/cars.scss'
 import { refreshTokenIfNeeded } from "../authUtils";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { mainAddress } from "../app";
+import { mainAddress } from "../app.jsx";
 import WhiteBox from "../WhiteBox.jsx";
 import { EditableField, AutoCompleteSearch, EditableDateField } from "../muiUtil";
 import {  Button, CircularProgress } from "@mui/material";
+import { useParams } from 'react-router-dom';
 import axios from "axios";
 
 function AddCar(props){
     const now = new Date()
     const dispatch = useDispatch()
     const navigate = useNavigate()
+    const { id } = useParams();
     const location = useLocation();
     const [year, month, date] = [now.getFullYear(), now.getMonth(), now.getDate()]
+    const [isChecking, setIsChecking] = useState(props.check)
     const [isEditing, setIsEditing] = useState(props.check?false:true)
     const [formLoading, setFormLoading] = useState(props.check?true:false)
+    const [fetchedData, setFetchedData] = useState({
+        serial_number: '',
+        technique_model: null,
+        engine_model: null,
+        engine_serial_number: '',
+        transmission_model: null,
+        transmission_serial_number: '',
+        driven_axle_model: null,
+        driven_axle_serial_number: '',
+        steered_axle_model: null,
+        steered_axle_serial_number: '',
+        delivery_contract_number: '',
+        shipping_date: new Date(year, month, date),
+        cargo_receiver: '',
+        delivery_address: '',
+        equipment: '',
+        client: null,
+    })
     const [formData, setFormData] = useState({
         serial_number: '',
         technique_model: null,
@@ -53,14 +74,35 @@ function AddCar(props){
         equipment: false,
         client: false,
     })
+    const nameOrId = (fetchedData, mode='name')=>{
+        return Object.fromEntries(
+            Object.entries(fetchedData).map(([key, value]) => [
+              key,
+              value && typeof value === "object" ? value[mode] : value,
+            ])
+        );
+    }
+
     const getData = async()=>{
-        console.log('test')
+        try{
+            await refreshTokenIfNeeded(dispatch)
+            console.log('use')
+            const response=await axios.get(`${mainAddress}/api/cars/${id}`,{withCredentials:true})
+            setFetchedData({...response.data})
+            setFormData({...response.data})
+            setFormLoading(false)
+        }catch(error){
+            if (error.response && error.response.status === 404) {
+                navigate('/404')
+            }
+            console.log(error)
+        }
     }
     useEffect(()=>{
-        if (props.check){
+        if (isChecking){
             getData()
         }
-    })
+    }, [])
     const handleChange = (e) => {
         const { name, value } = e.target;
             setFormData(prevState => ({
@@ -99,7 +141,7 @@ function AddCar(props){
             }
         } else{
             e.preventDefault()
-            console.log('мы просматриваем только')
+            setIsEditing(true)
         }
         
     };
@@ -115,6 +157,7 @@ function AddCar(props){
     
         return true;
     };
+
     return (
     <div className="cars">
         <WhiteBox headerText='Добавление клиента'>
@@ -139,9 +182,11 @@ function AddCar(props){
                     error={formErrors.technique_model}
                     helperText='Заполните поле'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=TECHNIQUE_MODEL`}
+                    checkEndPoint={`directories`}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
+                    canCheck={true}
                 />
                 {/* Модель двигателя  ENGINE_MODEL */}
                 <AutoCompleteSearch

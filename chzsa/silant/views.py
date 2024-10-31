@@ -406,7 +406,7 @@ def cars(request):
 @api_view(['GET'])
 def get_car_id(request, id):
     role_check = get_role_from_request(request)
-    get_item_by_id(request, Machine, AddMachineSerializer, id)
+    return get_item_by_id(request, Machine, MachineViewSerializer, id)
 
 @api_view(['POST'])
 def create_user(request):
