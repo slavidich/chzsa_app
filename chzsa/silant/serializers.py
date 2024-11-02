@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import Directory, Service, Machine
+from .models import Directory, Service, Machine, Maintenance
 from django.contrib.auth.models import User, Group
 
 class DirectorySerializer(serializers.ModelSerializer):
@@ -31,7 +31,7 @@ class SearchUserSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name']
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        full_name = f'{instance.username}'
+        full_name = f'{instance.last_name} {instance.first_name[:1]}. ({instance.username})'
         representation['name'] = full_name
         return representation
 
@@ -66,7 +66,7 @@ class MachineSerializer(serializers.ModelSerializer):
         model = Machine
         fields = ['id', 'serial_number', 'technique_model','engine_model','transmission_model','driven_axle_model','steered_axle_model', 'username']
     def get_username(self, obj):
-        return obj.client.username
+        return f'{obj.client.last_name} {obj.client.first_name[:1]}. ({obj.client.username})'
     def get_technique_model(self, obj):
         return obj.technique_model.name
     def get_engine_model(self, obj):
@@ -111,3 +111,18 @@ class MachineViewSerializer(serializers.ModelSerializer):
             'equipment',
             'client',
         ]
+
+class SearchMachinerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Machine
+        fields = ['id', 'serial_number']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['name'] = instance.serial_number
+        return representation
+class AllToSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Maintenance
+        depth=1
+        fields=['id', 'machine', 'service_company', 'maintenance_type', 'order_date' ]

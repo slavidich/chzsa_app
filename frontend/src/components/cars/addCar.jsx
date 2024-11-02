@@ -192,7 +192,7 @@ function AddCar(props){
                     name="technique_model"
                     value={formData.technique_model}
                     error={formErrors.technique_model}
-                    helperText='Заполните поле'
+                    helperText='Выберите модель техники'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=TECHNIQUE_MODEL`}
                     checkEndPoint={`directories`}
                     onChange={handleChange}
@@ -207,7 +207,7 @@ function AddCar(props){
                     name="engine_model"
                     value={formData.engine_model}
                     error={formErrors.engine_model}
-                    helperText='Заполните поле'
+                    helperText='Выберите модель двигателя'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=ENGINE_MODEL`}
                     checkEndPoint={`directories`}
                     canCheck={true}
@@ -233,7 +233,7 @@ function AddCar(props){
                     name="transmission_model"
                     value={formData.transmission_model}
                     error={formErrors.transmission_model}
-                    helperText='Заполните поле'
+                    helperText='Выберите модель трансмиссии'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=TRANSMISSION_MODEL`}
                     checkEndPoint={`directories`}
                     canCheck={true}
@@ -259,7 +259,7 @@ function AddCar(props){
                     name="driven_axle_model"
                     value={formData.driven_axle_model}
                     error={formErrors.driven_axle_model}
-                    helperText='Заполните поле'
+                    helperText='Выберите модель ведущего моста'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=DRIVEN_AXLE_MODEL`}
                     checkEndPoint={`directories`}
                     canCheck={true}
@@ -285,7 +285,7 @@ function AddCar(props){
                     name="steered_axle_model"
                     value={formData.steered_axle_model}
                     error={formErrors.steered_axle_model}
-                    helperText='Заполните поле'
+                    helperText='Выберите модель управляемого моста'
                     endpoint={`${mainAddress}/api/search?model=directory&entity_name=STEERED_AXLE_MODEL`}
                     checkEndPoint={`directories`}
                     canCheck={true}
@@ -369,7 +369,7 @@ function AddCar(props){
                     name="client"
                     value={formData.client}
                     error={formErrors.client}
-                    helperText='Заполните поле'
+                    helperText='Выберите клиента (username)'
                     endpoint={`${mainAddress}/api/search?model=client`}
                     checkEndPoint={`users`}
                     canCheck={true}

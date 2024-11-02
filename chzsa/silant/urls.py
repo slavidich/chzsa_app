@@ -20,6 +20,8 @@ urlpatterns = [
     path('api/cars', cars, name='cars'),
     path('api/cars/<int:id>', get_car_id, name='services'),
 
+    path('api/to', allto, name='allto'),
+
     path('api/search',searchdata, name='search' ),
 
     path('api/refreshpassword', updatePassword, name='updatePassword'),

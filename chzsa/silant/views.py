@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, AnonymousUser, Group
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db.models.functions import Concat, Left
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -12,8 +13,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.db import transaction
-from django.db.models import Q
-
+from django.db.models import Q, CharField
+from django.db.models import Value
 from .tasks import sendEmailResetPassword
 from .serializers import *
 from .models import *
@@ -237,8 +238,23 @@ def searchdata(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif model=='client':
         search_term = request.query_params.get('search', None)
-        users = User.objects.filter(Q(username__contains='client')&(Q(username__contains=search_term)|Q(first_name__contains=search_term)|Q(last_name__contains=search_term))).order_by('id')
+        #users = User.objects.filter(Q(username__contains='client')&(Q(username__contains=search_term)|Q(first_name__contains=search_term)|Q(last_name__contains=search_term))).order_by('id')
+        users = User.objects.annotate(
+            search_string=Concat(
+                'last_name',
+                Value(' '),
+                Left('first_name', 1),
+                Value('. ('),
+                'username',
+                Value(')')
+            )
+        ).filter(Q(search_string__icontains=search_term)&Q(username__contains='client')).order_by('id')
         serializer = SearchUserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif model=='machine': # поиск по зав. №
+        search_term = request.query_params.get('search', None)
+        machines = Machine.objects.filter(serial_number__contains=search_term).order_by('id')
+        serializer = SearchMachinerSerializer(machines, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -382,31 +398,21 @@ def cars(request):
     if request.method == 'GET':
         if role_check=='Менеджер':
             sort_field = request.query_params.get('sortField', 'id')
-            if sort_field=='username':
-                sort_field='client__username'
-            elif sort_field == 'technique_model':
-                sort_field = 'technique_model__name'
-            elif sort_field == 'engine_model':
-                sort_field = 'engine_model__name'
-            elif sort_field == 'transmission_model':
-                sort_field = 'transmission_model__name'
-            elif sort_field == 'driven_axle_model':
-                sort_field = 'driven_axle_model__name'
-            elif sort_field == 'steered_axle_model':
-                sort_field = 'steered_axle_model__name'
+            field_mapping = {
+                # вот тут надо придумать какой то sort_field для username, который состоит из
+                'username': 'client__username',
+                'technique_model': 'technique_model__name',
+                'engine_model': 'engine_model__name',
+                'transmission_model': 'transmission_model__name',
+                'driven_axle_model': 'driven_axle_model__name',
+                'steered_axle_model': 'steered_axle_model__name'
+            }
+            sort_field = request.query_params.get('sortField', None)
+            sort_field = field_mapping.get(sort_field, sort_field)
+
             search_field = request.query_params.get('searchField', None)
-            if search_field=='username':
-                search_field='client__username'
-            elif search_field=='technique_model':
-                search_field='technique_model__name'
-            elif search_field=='engine_model':
-                search_field='engine_model__name'
-            elif search_field=='transmission_model':
-                search_field='transmission_model__name'
-            elif search_field=='driven_axle_model':
-                search_field='driven_axle_model__name'
-            elif search_field=='steered_axle_model':
-                search_field='steered_axle_model__name'
+            search_field = field_mapping.get(search_field, search_field)
+
             return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field, sort_field=sort_field)
         else: get403()
     elif request.method=='POST':
@@ -434,6 +440,16 @@ def cars(request):
 def get_car_id(request, id):
     role_check = get_role_from_request(request)
     return get_item_by_id(request, Machine, MachineViewSerializer, id)
+
+@api_view(['GET'])
+def allto(request):
+    role_check = get_role_from_request(request)
+    if request.method == 'GET':
+        if role_check == 'Менеджер':
+            sort_field = request.query_params.get('sortField', 'id')
+            search_field = request.query_params.get('searchField', None)
+            return paginate_queryset(Maintenance, request, AllToSerializer, search_field=search_field, sort_field=sort_field)
+        else: get403()
 
 @api_view(['POST'])
 def create_user(request):

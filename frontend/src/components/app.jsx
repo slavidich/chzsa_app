@@ -26,6 +26,9 @@ const Services = React.lazy(()=>import('./services/services.jsx'))
 const AddService = React.lazy(()=>import('./services/AddService.jsx'))
 const CheckService = React.lazy(()=>import('./services/CheckService.jsx'))
 
+const AllTo = React.lazy(()=>import('./to/AllTo.jsx'))
+const AddTo = React.lazy(()=>import('./to/AddTo.jsx'))
+
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 5*1000*60
@@ -73,6 +76,8 @@ function App() {
                     <Route path="/cars/new" element={<ProtectedRoute requiredRole='Менеджер'><AddCar/></ProtectedRoute>} />
                     <Route path="/cars/:id" element={<AddCar check={true}/>} />
 
+                    <Route path="/to" element={<AllTo/>}/>
+                    <Route path="/to/new" element={<AddTo/>}/>
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     
                     

@@ -10,6 +10,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import ruLocale from 'date-fns/locale/ru';
 
 
+
 export const theme = createTheme({
     typography: {
         fontFamily: [
@@ -145,7 +146,7 @@ export const EditableDateField  =React.memo(({isEditing, label, name, value, err
     )
 })
 
-export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false, canCheck=false})=>{
+export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, name, value, error, helperText, onChange, loading, isReq=false, canCheck=false, placeholder=''})=>{
     const [options, setOptions] =useState(isEditing && value ? [value] : []);
     const [loadingState, setLoadingState] = useState(false);
     const [inputError, setInputError] = useState(false);
@@ -217,6 +218,7 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
                             {...params}
                             error={inputError || error}
                             helperText={(error||inputError) && helperText}
+                            placeholder={placeholder||(inputError?'':helperText)}
                             sx={{ 
                                 whiteSpace: 'normal', // Позволяет тексту переноситься на новую строку
                                 overflow: 'hidden', 
