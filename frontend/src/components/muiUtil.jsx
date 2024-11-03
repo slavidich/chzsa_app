@@ -10,7 +10,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import ruLocale from 'date-fns/locale/ru';
 
 
-
 export const theme = createTheme({
     typography: {
         fontFamily: [
@@ -72,7 +71,8 @@ export const EditableField = ({isEditing,name, label, value,
           />
         :
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            {value? value: 'Пусто'}
+            {loading? '':value? value: 'Пусто'}
+
           </Typography>
         }
     </FormControl>
@@ -129,17 +129,19 @@ export const EditableDateField  =React.memo(({isEditing, label, name, value, err
                             disabled={loading}
                             required={isReq}
                             format="dd.MM.yyyy"
+                            mask="__.__.____"
                             slotProps={{
                                 textField: {
                                     error: error,
-                                    helperText: error&&helperText
+                                    helperText: error&&helperText,
+                                    placeholder:'ДД.ММ.ГГГГ',
                                 }
                             }}
                         />
                   </LocalizationProvider>
             :
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                {new Date(value).toLocaleDateString()}
+                {loading? '':new Date(value).toLocaleDateString()}
             </Typography>
             }
         </FormControl>
@@ -201,12 +203,18 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
                     value={value|| null}
                     options={options}
                     getOptionLabel={(option) => option.name || ''}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
                     loading={loadingState}
                     noOptionsText="Нет вариантов"
                     loadingText="Загрузка..."
                     onInputChange={handleSearch}
                     onChange={handleChange}
                     disabled={loading}
+                    renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          {option.name}
+                        </li>
+                    )}
                     PaperComponent={(params) => (
                         <Paper 
                             {...params} 

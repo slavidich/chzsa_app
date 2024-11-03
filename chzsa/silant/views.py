@@ -13,7 +13,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.db import transaction
-from django.db.models import Q, CharField
+from django.db.models import Q, CharField, F
 from django.db.models import Value
 from .tasks import sendEmailResetPassword
 from .serializers import *
@@ -97,6 +97,95 @@ def paginate_queryset(model, request, serializer_class, sort_field='id', search_
     }
     return Response(response_data)
     #return paginator.get_paginated_response(serializer.data)
+
+
+def paginate_client_queryset(model, request, serializer_class, user='user', sort_field='id', page_size=10):
+    page_size = request.query_params.get('page_size', page_size)
+    paginator = PageNumberPagination()
+    paginator.page_size = page_size
+
+    sort_order = request.query_params.get('sortOrder', 'asc')
+    search_value = request.query_params.get('searchValue', None)
+
+    queryset = model.objects.annotate(
+        search_string=Concat(
+            F(f'{user}__last_name'),
+            Value(' '),
+            Left(F(f'{user}__first_name'), 1),
+            Value('. ('),
+            F(f'{user}__username'),
+            Value(')')
+        )
+    )
+    if sort_order == 'desc':
+        sort_field = f'-{sort_field}'
+
+    if sort_field=='id':
+        queryset = queryset.order_by(sort_order)
+    else:
+        if sort_order=='asc':
+            queryset = queryset.order_by('search_string')
+        else:
+            queryset = queryset.order_by('-search_string')
+
+    if search_value:
+        queryset = queryset.filter(Q(search_string__icontains=search_value))
+
+    django_paginator = Paginator(queryset, page_size)
+    total_pages = django_paginator.num_pages
+
+    result_page = paginator.paginate_queryset(queryset, request)
+
+    serializer = serializer_class(result_page, many=True)
+    response_data = {
+        'count': paginator.page.paginator.count,
+        'results': serializer.data,
+        'last_page': total_pages
+    }
+
+    return Response(response_data)
+
+def paginate_service_queryset(model, request, serializer_class, service='service_company', sort_field='id', page_size=10 ):
+    page_size = request.query_params.get('page_size', page_size)
+    paginator = PageNumberPagination()
+    paginator.page_size = page_size
+
+    sort_order = request.query_params.get('sortOrder', 'asc')
+    search_value = request.query_params.get('searchValue', None)
+
+    queryset = model.objects.annotate(
+        search_string=Concat(
+            F(f'{service}__name'),
+            Value(' ('),
+            F(f'{service}__user__username'),
+            Value(')')
+        )
+    )
+    if sort_order == 'desc':
+        sort_field = f'-{sort_field}'
+    if sort_field=='id':
+        queryset = queryset.order_by(sort_field)
+    else:
+        if sort_order=='asc':
+            queryset = queryset.order_by('search_string')
+        else:
+            queryset = queryset.order_by('-search_string')
+    if search_value:
+        queryset = queryset.filter(Q(search_string__icontains=search_value))
+    django_paginator = Paginator(queryset, page_size)
+    total_pages = django_paginator.num_pages
+
+    result_page = paginator.paginate_queryset(queryset, request)
+
+    serializer = serializer_class(result_page, many=True)
+    response_data = {
+        'count': paginator.page.paginator.count,
+        'results': serializer.data,
+        'last_page': total_pages
+    }
+    return Response(response_data)
+
+
 
 @api_view(['POST'])
 def refreshtokens(request):
@@ -256,6 +345,19 @@ def searchdata(request):
         machines = Machine.objects.filter(serial_number__contains=search_term).order_by('id')
         serializer = SearchMachinerSerializer(machines, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    elif model=='service':
+        search_term = request.query_params.get('search', None)
+        #services = Service.objects.filter(name__contains=search_term).order_by('id')
+        services = Service.objects.annotate(
+            search_string=Concat(
+                'name',
+                Value(' ('),
+                'user__username',
+                Value(')')
+            )
+        ).filter(Q(search_string__icontains=search_term)&Q(user__username__contains='service')).order_by('id')
+        serializer = SearchServiceSerializer(services, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'PUT']) # api/users
@@ -397,7 +499,6 @@ def cars(request):
     role_check = get_role_from_request(request)
     if request.method == 'GET':
         if role_check=='Менеджер':
-            sort_field = request.query_params.get('sortField', 'id')
             field_mapping = {
                 # вот тут надо придумать какой то sort_field для username, который состоит из
                 'username': 'client__username',
@@ -407,12 +508,14 @@ def cars(request):
                 'driven_axle_model': 'driven_axle_model__name',
                 'steered_axle_model': 'steered_axle_model__name'
             }
-            sort_field = request.query_params.get('sortField', None)
+            sort_field = request.query_params.get('sortField', 'id')
             sort_field = field_mapping.get(sort_field, sort_field)
 
             search_field = request.query_params.get('searchField', None)
             search_field = field_mapping.get(search_field, search_field)
 
+            if sort_field=='client__username' or search_field=='client__username': # это если сортировка
+                return paginate_client_queryset(model=Machine, request=request, serializer_class=MachineSerializer, sort_field='client__username', user='client')
             return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field, sort_field=sort_field)
         else: get403()
     elif request.method=='POST':
@@ -428,6 +531,10 @@ def cars(request):
         if role_check == 'Менеджер':
             machine_id = request.data.get('id')
             machine = get_object_or_404(Machine, id=machine_id)
+            serial_number = request.data.get('serial_number')
+            error_machine = Machine.objects.all().filter(serial_number=serial_number)
+            if error_machine:
+                return Response('Машина с данным зав. № уже существует! Выберите другой зав. №!', status=status.HTTP_400_BAD_REQUEST)
             serializer = AddMachineSerializer(machine, data=request.data, partial=True)
             if serializer.is_valid():
                 machine = serializer.save()
@@ -441,15 +548,46 @@ def get_car_id(request, id):
     role_check = get_role_from_request(request)
     return get_item_by_id(request, Machine, MachineViewSerializer, id)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST', 'PUT'])
 def allto(request):
     role_check = get_role_from_request(request)
+    field_mapping = {
+        'machine': 'machine__serial_number',
+        'service_company': 'service_company__name',
+        'maintenance_type': 'maintenance_type__name',
+        'maintenance_date': 'maintenance_date',
+        'operating_hours': 'operating_hours',
+        'order_number': 'order_number',
+        'order_date':'order_date',
+    }
     if request.method == 'GET':
         if role_check == 'Менеджер':
             sort_field = request.query_params.get('sortField', 'id')
+            sort_field = field_mapping.get(sort_field, sort_field)
+
             search_field = request.query_params.get('searchField', None)
+            search_field = field_mapping.get(search_field, search_field)
+            if search_field=='service_company__name':
+                return paginate_service_queryset(Maintenance, request, AllToSerializer, sort_field=sort_field)
             return paginate_queryset(Maintenance, request, AllToSerializer, search_field=search_field, sort_field=sort_field)
         else: get403()
+    if request.method=='POST':
+        if role_check=='Менеджер':
+            serializer = AddToSerializer(data=request.data)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('ТО добавлено', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else: get403()
+
+@api_view(['GET'])
+def get_to_id(request, id):
+    role_check = get_role_from_request(request)
+    if role_check=='Менеджер':
+        return get_item_by_id(request, Maintenance, ToViewSerializer, id)
+    elif role_check=='Сервисная организация':
+        ... # здесь надо проверить, что сервис смотрит СВОИ то а не чужую!
 
 @api_view(['POST'])
 def create_user(request):

@@ -121,8 +121,46 @@ class SearchMachinerSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['name'] = instance.serial_number
         return representation
-class AllToSerializer(serializers.ModelSerializer):
+
+class SearchServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = ['id', 'name']
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['name'] = f'{instance.name} ({instance.user.username})'
+        return representation
+
+class AddToSerializer(serializers.ModelSerializer):
     class Meta:
         model = Maintenance
-        depth=1
-        fields=['id', 'machine', 'service_company', 'maintenance_type', 'order_date' ]
+        fields=['id', 'machine', 'service_company', 'maintenance_type', 'maintenance_date', 'order_date','order_number', 'operating_hours' ]
+
+class AllToSerializer(serializers.ModelSerializer):
+    machine = serializers.SerializerMethodField()
+    service_company = serializers.SerializerMethodField()
+    maintenance_type = serializers.SerializerMethodField()
+    class Meta:
+        model = Maintenance
+        fields=['id', 'machine', 'service_company', 'maintenance_type', 'maintenance_date', 'order_date','order_number', 'operating_hours' ]
+
+    def get_machine(self, obj):
+        return obj.machine.serial_number
+    def get_service_company(self, obj):
+        return f'{obj.service_company.name} ({obj.service_company.user.username})'
+    def get_maintenance_type(self, obj):
+        return obj.maintenance_type.name
+
+class ToViewSerializer(serializers.ModelSerializer):
+    machine = serializers.SerializerMethodField()
+    service_company = serializers.SerializerMethodField()
+    class Meta:
+        depth = 1
+        model = Maintenance
+        fields = ['id', 'machine', 'service_company', 'maintenance_type', 'maintenance_date', 'order_date','order_number', 'operating_hours' ]
+    def get_machine(self, obj):
+        return {"id": obj.machine.id,
+                "name": obj.machine.serial_number}
+    def get_service_company(self, obj):
+        return {"id": obj.service_company.id,
+                "name": f'{obj.service_company.name} ({obj.service_company.user.username})'}

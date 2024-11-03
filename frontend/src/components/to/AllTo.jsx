@@ -13,14 +13,13 @@ function AllTo(){
         <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},
-                    {field: "serial_number", header: "Зав. № машины", maxLength:15},
-                    {field: "technique_model", header: "Модель техники", maxLength:20, hideWhenWidth:900},
-                    {field: "engine_model", header: "Модель двигателя", maxLength:20, hideWhenWidth:900},
-                    {field: "transmission_model", header: "Модель трансмиссии", maxLength:20, hideWhenWidth:900},
-                    {field: "driven_axle_model", header: "Модель ведущего моста", maxLength:20, hideWhenWidth:900},
-                    {field: "steered_axle_model", header: "Модель управляемого моста", maxLength:20, hideWhenWidth:900},
-
-                    {field: "username", header: "Клиент", maxLength:10},,
+                    {field: "machine", header: "Зав. № машины", maxLength:15},
+                    {field: "service_company", header: "Сервисная организация", maxLength:20, hideWhenWidth:900},
+                    {field: "maintenance_type", header: "Тип ТО", maxLength:20, hideWhenWidth:900},
+                    {field: "maintenance_date", header: "Дата ТО", maxLength:20, hideWhenWidth:900},
+                    {field: "operating_hours", header: "Наработка м/час", maxLength:20, hideWhenWidth:900},
+                    {field: "order_number", header: "№ заказ-наряда", maxLength:20, hideWhenWidth:900},
+                    {field: "order_date", header: "Дата заказ-наряда", maxLength:10},,
                 ]}
                 path='/api/to'
                 dispatch={dispatch}

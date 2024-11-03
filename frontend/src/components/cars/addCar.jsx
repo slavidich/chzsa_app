@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from "react";
 import '../../styles/cars.scss'
-import { refreshTokenIfNeeded } from "../authUtils";
+import { refreshTokenIfNeeded, updateAccessToken } from "../authUtils";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { mainAddress } from "../app.jsx";
@@ -114,10 +114,10 @@ function AddCar(props){
         });
     }
     const handleAdd = async (e) => {
+        await refreshTokenIfNeeded(dispatch)
         if (!props.check){
             e.preventDefault()
             setFormLoading(true)
-            await refreshTokenIfNeeded(dispatch)
             try {
                 await axios.post(`${mainAddress}/api/cars`, { ...transformIdsFormData(formData), shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
                 const response = await axios.get(`${mainAddress}/api/cars`, {withCredentials:true})
@@ -136,16 +136,17 @@ function AddCar(props){
             if (isEditing){
                 setFormLoading(true)
                 try {
-
                     await axios.put(`${mainAddress}/api/cars`, { ...transformIdsFormData(formData), shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
                     setFetchedData(formData)
                     setFormLoading(false)
+                    setIsEditing(false)
                 } catch (error) {
-                    alert(error);
+                    setFormData({
+                        ...fetchedData, 
+                    })
+                    alert(error.response.data);
                     setFormLoading(false)
                 }
-                setIsEditing(false)
-
             } else{
                 setIsEditing(true)
             }
@@ -162,9 +163,8 @@ function AddCar(props){
         const requiredFields = allFields.filter(field => field !== 'equipment');
 
         for (const field of requiredFields) {
-            if (!formData[field] || formData[field] === '') {
-                return false;
-            }
+            const value = formData[field];
+            if(!value||(typeof value==='string' && value.trim()==='')) return false
         }
     
         return true;
@@ -394,7 +394,8 @@ function AddCar(props){
                             color="primary"
                             onClick={handleAdd}
                             disabled={!isValid()||formLoading}>
-                                {isEditing?'Сохранить':'Изменить'}    
+                                {formLoading?<CircularProgress/>:isEditing?'Сохранить':'Изменить'}
+                                
                         </Button>
                         {isEditing?(
                             <Button 
@@ -403,7 +404,7 @@ function AddCar(props){
                                 color="primary"
                                 onClick={cancelEdit}
                                 disabled={formLoading}>
-                                    Отменить
+                                    {formLoading?<CircularProgress/>:'Отменить'}
                             </Button>):<></>}</>}
                 </div>
 

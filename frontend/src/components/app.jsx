@@ -78,6 +78,7 @@ function App() {
 
                     <Route path="/to" element={<AllTo/>}/>
                     <Route path="/to/new" element={<AddTo/>}/>
+                    <Route path="/to/:id" element={<AddTo check={true}/>} />
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     
                     

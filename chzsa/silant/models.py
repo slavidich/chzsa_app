@@ -1,3 +1,5 @@
+from enum import unique
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -42,7 +44,7 @@ class Service(models.Model): # сервисная компания
         verbose_name_plural = "Сервисные компании"
 
 class Machine(models.Model): # Машина
-    serial_number = models.CharField(max_length=255, verbose_name='Зав. № машины')
+    serial_number = models.CharField(max_length=255, verbose_name='Зав. № машины', unique=True)
     technique_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='technique_machines', verbose_name='Модель техники', limit_choices_to={'entity_name': Directory.EntityType.TECHNIQUE_MODEL})
     engine_model = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='engine_machines', verbose_name='Модель двигателя', limit_choices_to={'entity_name': Directory.EntityType.ENGINE_MODEL})
     engine_serial_number = models.CharField(max_length=255, verbose_name='Зав. № двигателя')
