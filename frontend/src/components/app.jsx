@@ -29,6 +29,8 @@ const CheckService = React.lazy(()=>import('./services/CheckService.jsx'))
 const AllTo = React.lazy(()=>import('./to/AllTo.jsx'))
 const AddTo = React.lazy(()=>import('./to/AddTo.jsx'))
 
+const Complaints = React.lazy(()=> import('./complaint/Complaints.jsx'))
+const AddComplaint = React.lazy(()=> import('./complaint/AddComplaint.jsx'))
 
 export const mainAddress = 'http://127.0.0.1:8000'
 export const accessLifeTime = 5*1000*60
@@ -79,6 +81,11 @@ function App() {
                     <Route path="/to" element={<AllTo/>}/>
                     <Route path="/to/new" element={<AddTo/>}/>
                     <Route path="/to/:id" element={<AddTo check={true}/>} />
+
+                    <Route path='/complaint' element={<Complaints/>}/>
+                    <Route path='/complaint/new' element={<AddComplaint/>}/>
+                    <Route path="/complaint/:id" element={<AddComplaint check={true}/>} />
+
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     
                     

@@ -121,7 +121,23 @@ function AddTo(props){
         }else{
             e.preventDefault()
             if (isEditing){
-                
+                setFormLoading(true)
+                try {
+                    await axios.put(`${mainAddress}/api/to`, {
+                        ...transformIdsFormData(formData), 
+                        maintenance_date: formData.maintenance_date.toLocaleDateString('en-CA'),
+                        order_date: formData.order_date.toLocaleDateString('en-CA')
+                    }, { withCredentials: true });
+                    setFetchedData(formData)
+                    setFormLoading(false)
+                    setIsEditing(false)
+                } catch (error) {
+                    setFormData({
+                        ...fetchedData, 
+                    })
+                    alert(error.response.data);
+                    setFormLoading(false)
+                }
             }else{
                 setIsEditing(true)
             }

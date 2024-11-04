@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from .models import Directory, Service, Machine, Maintenance
+from .models import Directory, Service, Machine, Maintenance, Complaint
 from django.contrib.auth.models import User, Group
 
 class DirectorySerializer(serializers.ModelSerializer):
@@ -164,3 +164,21 @@ class ToViewSerializer(serializers.ModelSerializer):
     def get_service_company(self, obj):
         return {"id": obj.service_company.id,
                 "name": f'{obj.service_company.name} ({obj.service_company.user.username})'}
+
+class GetAllComplaints(serializers.ModelSerializer):
+    machine = serializers.SerializerMethodField()
+    service_company = serializers.SerializerMethodField()
+    failure_node = serializers.SerializerMethodField()
+    recovery_method = serializers.SerializerMethodField()
+    class Meta:
+        model = Complaint
+        fields = ['id', 'machine', 'service_company', 'date_refuse', 'failure_node', 'recovery_method', 'recovery_date']
+
+    def get_machine(self, obj):
+        return obj.machine.serial_number
+    def get_service_company(self, obj):
+        return f'{obj.service_company.name} ({obj.service_company.user.username})'
+    def get_failure_node(self, obj):
+        return obj.failure_node.name
+    def get_recovery_method(self, obj):
+        return obj.recovery_method.name

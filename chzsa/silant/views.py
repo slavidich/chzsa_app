@@ -520,6 +520,11 @@ def cars(request):
         else: get403()
     elif request.method=='POST':
         if role_check=='Менеджер':
+            serial_number = request.data.get('serial_number')
+            error_machine = Machine.objects.all().filter(serial_number=serial_number)
+            if error_machine:
+                return Response('Машина с данным зав. № уже существует! Выберите другой зав. №!',
+                                status=status.HTTP_400_BAD_REQUEST)
             serializer = AddMachineSerializer(data=request.data)
             if serializer.is_valid():
                 machine = serializer.save()
@@ -580,6 +585,17 @@ def allto(request):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else: get403()
+    if request.method=='PUT':
+        if role_check=='Менеджер':
+            to_id = request.data.get('id')
+            to = get_object_or_404(Maintenance, id=to_id)
+            serializer = AddToSerializer(to, data=request.data, partial=True)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('Машина изменена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else: get403()
 
 @api_view(['GET'])
 def get_to_id(request, id):
@@ -588,6 +604,28 @@ def get_to_id(request, id):
         return get_item_by_id(request, Maintenance, ToViewSerializer, id)
     elif role_check=='Сервисная организация':
         ... # здесь надо проверить, что сервис смотрит СВОИ то а не чужую!
+
+@api_view(['GET', 'POST', 'PUT'])
+def complaints(request):
+    role_check = get_role_from_request(request)
+    field_mapping = {
+        'machine': 'machine__serial_number',
+        'service_company': 'service_company__name',
+        'failure_node': 'failure_node__name',
+        'recovery_method': 'recovery_method__name'
+    }
+    if request.method == 'GET':
+        if role_check=='Менеджер':
+            sort_field = request.query_params.get('sortField', 'id')
+            sort_field = field_mapping.get(sort_field, sort_field)
+
+            search_field = request.query_params.get('searchField', None)
+            search_field = field_mapping.get(search_field, search_field)
+            if search_field == 'service_company__name':
+                return paginate_service_queryset(Complaint, request, GetAllComplaints, sort_field=sort_field)
+            return paginate_queryset(Complaint, request, GetAllComplaints, search_field=search_field,
+                                     sort_field=sort_field)
+        else: get403()
 
 @api_view(['POST'])
 def create_user(request):

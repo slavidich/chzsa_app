@@ -23,6 +23,9 @@ urlpatterns = [
     path('api/to', allto, name='allto'),
     path('api/to/<int:id>', get_to_id, name='to'),
 
+    path('api/complaints', complaints, name='complaints'),
+
+
     path('api/search',searchdata, name='search' ),
 
     path('api/refreshpassword', updatePassword, name='updatePassword'),
