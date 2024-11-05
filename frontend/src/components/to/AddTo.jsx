@@ -132,9 +132,6 @@ function AddTo(props){
                     setFormLoading(false)
                     setIsEditing(false)
                 } catch (error) {
-                    setFormData({
-                        ...fetchedData, 
-                    })
                     alert(error.response.data);
                     setFormLoading(false)
                 }

@@ -63,9 +63,9 @@ function Header(){
                     <Link to='/users'>Клиенты</Link>
                     <Link to='/services'>Сервисы</Link>
                     </>:<></>}
-                <Link to='/cars'>Машины</Link>
-                <Link to='/to'>ТО</Link>
-                <Link to='/complaint'>Рекламации</Link>
+                <Link to='/cars?sortField=shipping_date'>Машины</Link>
+                <Link to='/to?sortField=maintenance_date'>ТО</Link>
+                <Link to='/complaint?sortField=date_refuse'>Рекламации</Link>
             </div>
         :
             <></>

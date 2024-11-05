@@ -538,7 +538,7 @@ def cars(request):
             machine = get_object_or_404(Machine, id=machine_id)
             serial_number = request.data.get('serial_number')
             error_machine = Machine.objects.all().filter(serial_number=serial_number)
-            if error_machine:
+            if error_machine and error_machine[0].id!=int(machine_id):
                 return Response('Машина с данным зав. № уже существует! Выберите другой зав. №!', status=status.HTTP_400_BAD_REQUEST)
             serializer = AddMachineSerializer(machine, data=request.data, partial=True)
             if serializer.is_valid():
@@ -626,7 +626,34 @@ def complaints(request):
             return paginate_queryset(Complaint, request, GetAllComplaints, search_field=search_field,
                                      sort_field=sort_field)
         else: get403()
+    if request.method=='POST':
+        if role_check=='Менеджер':
+            serializer = PostComplaint(data=request.data)
+            if serializer.is_valid():
+                complaint = serializer.save()
+                return Response('Рекламация добавлена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else: get403()
+    if request.method=='PUT':
+        if role_check=='Менеджер':
+            complaint_id = request.data.get('id')
+            compaint = get_object_or_404(Complaint, id=complaint_id)
+            serializer = PostComplaint(compaint, data=request.data, partial=True)
+            if serializer.is_valid():
+                complaint = serializer.save()
+                return Response('Рекламация изменена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET'])
+def get_complaint_id(request, id):
+    role_check = get_role_from_request(request)
+    if role_check=='Менеджер':
+        return get_item_by_id(request, Complaint, GetFullComplaint, id)
+    elif role_check=='Сервисная организация':
+        ... # здесь надо проверить, что сервис смотрит СВОИ то а не чужую!
 @api_view(['POST'])
 def create_user(request):
     role_check = get_role_from_request(request)

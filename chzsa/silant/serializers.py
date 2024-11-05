@@ -4,15 +4,34 @@ from rest_framework.fields import SerializerMethodField
 from .models import Directory, Service, Machine, Maintenance, Complaint
 from django.contrib.auth.models import User, Group
 
+##### сериализаторы для переходов внутри просмотра итд
+class MachineSimple(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    class Meta:
+        model = Machine
+        fields = ['id', 'serial_number', 'name']
+
+    def get_name(self, obj):
+        return obj.serial_number
+
+class DirectorySimple(serializers.ModelSerializer):
+    class Meta:
+        model = Directory
+        fields = ['id', 'name']
+
+class ServiceSimple(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = ['id', 'name']
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['name'] = f'{instance.name} ({instance.user.username})'
+        return representation
+#####
 class DirectorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Directory
         fields = ['id', 'entity_name', 'name', 'description']
-
-class DirectorySimpleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Directory
-        fields = ['id', 'name']
 
 class SearchDirectorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -64,7 +83,7 @@ class MachineSerializer(serializers.ModelSerializer):
     steered_axle_model= serializers.SerializerMethodField()
     class Meta:
         model = Machine
-        fields = ['id', 'serial_number', 'technique_model','engine_model','transmission_model','driven_axle_model','steered_axle_model', 'username']
+        fields = ['id', 'serial_number', 'technique_model','engine_model','transmission_model','driven_axle_model','steered_axle_model', 'username', 'shipping_date']
     def get_username(self, obj):
         return f'{obj.client.last_name} {obj.client.first_name[:1]}. ({obj.client.username})'
     def get_technique_model(self, obj):
@@ -182,3 +201,19 @@ class GetAllComplaints(serializers.ModelSerializer):
         return obj.failure_node.name
     def get_recovery_method(self, obj):
         return obj.recovery_method.name
+
+class PostComplaint(serializers.ModelSerializer):
+    class Meta:
+        model=Complaint
+        fields='__all__'
+
+class GetFullComplaint(serializers.ModelSerializer):
+    machine = MachineSimple()
+    service_company = ServiceSimple()
+    failure_node = DirectorySimple()
+    recovery_method = DirectorySimple()
+    class Meta:
+        model = Complaint
+        fields=['id', 'machine', 'service_company', 'date_refuse', 'operating_hours', 'failure_node', 'failure_description', 'recovery_method','parts_used', 'recovery_date', 'downtime']
+
+

@@ -90,9 +90,9 @@ class Complaint(models.Model): # рекламация
     date_refuse = models.DateField(verbose_name='Дата отказа')
     operating_hours = models.IntegerField(verbose_name='Наработка, м/час')
     failure_node = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='failure_complaints', verbose_name='Узел отказа', limit_choices_to={'entity_name': Directory.EntityType.FAILURE_NODE})
-    failure_description = models.CharField(max_length=255, verbose_name='Описание отказа')
+    failure_description = models.CharField(max_length=255, verbose_name='Описание отказа', blank=True)
     recovery_method = models.ForeignKey(Directory, on_delete=models.CASCADE, related_name='recovery_complaints', verbose_name='Способ восстановления', limit_choices_to={'entity_name': Directory.EntityType.RECOVERY_METHOD})
-    parts_used = models.TextField(verbose_name='Используемые запасные части')
+    parts_used = models.TextField(verbose_name='Используемые запасные части', blank=True)
     recovery_date = models.DateField(verbose_name='Дата восстановления')
     downtime = models.CharField(max_length=255, verbose_name='Время простоя техники')
 

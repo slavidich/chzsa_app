@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import '../../styles/to.scss'
+import '../../styles/complaints.scss'
 import { refreshTokenIfNeeded } from "../authUtils";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -57,6 +57,25 @@ function AddComplaint(props){
         recovery_date: false,
         downtime:false
     })
+    const getData = async()=>{
+        try{
+            await refreshTokenIfNeeded(dispatch)
+            const response=await axios.get(`${mainAddress}/api/complaint/${id}`,{withCredentials:true})
+            setFetchedData({...response.data, date_refuse: new Date(response.data.date_refuse), recovery_date:new Date(response.data.recovery_date)})
+            setFormData({...response.data, date_refuse: new Date(response.data.date_refuse), recovery_date:new Date(response.data.recovery_date) })
+            setFormLoading(false)
+        }catch(error){
+            if (error.response && error.response.status === 404) {
+                navigate('/404')
+            }
+            console.log(error)
+        }
+    }
+    useEffect(()=>{
+        if (isChecking){
+            getData()
+        }
+    }, [])
     const handleChange = (e) => {
         
         const { name, value } = e.target;
@@ -68,6 +87,7 @@ function AddComplaint(props){
     };
     const validateField=(name, value)=>{
         if (name==='date_refuse'){
+            const date = new Date(value)
             if (!value){
                 setFormErrors({
                     ...formErrors, 
@@ -79,10 +99,17 @@ function AddComplaint(props){
                     [name]:true,
                     recovery_date: true
                 })
+            } else if (date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900){
+                setFormErrors({
+                    ...formErrors,
+                    [name]:true
+                })
             } else{
+                const date = new Date(formData.recovery_date)
                 setFormErrors({
                     ...formErrors, 
-                    [name]: false
+                    [name]: false,
+                    recovery_date: (date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900)? true:false
                 })
                 setFormData(prevState => ({
                     ...prevState,
@@ -90,6 +117,7 @@ function AddComplaint(props){
                 }))
             }
         }else if (name==='recovery_date'){
+            const date = new Date(value)
             if (!value){
                 setFormErrors({
                     ...formErrors, 
@@ -101,18 +129,27 @@ function AddComplaint(props){
                     [name]:true,
                     date_refuse: true
                 })
-            } else{
+            } else if(date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900){
+                setFormErrors({
+                    ...formErrors,
+                    [name]:true
+                })
+            }else {
+                const date = new Date(formData.date_refuse)
                 setFormErrors({
                     ...formErrors, 
-                    [name]: false
+                    [name]: false,
+                    date_refuse:(date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900)? true:false
                 })
                 setFormData(prevState => ({
                     ...prevState,
                     downtime: (value- formData.date_refuse)/ (60 * 60 * 24 * 1000)
                 }))
             }
-            
         } else{
+            const allFields = Object.keys(formData);
+            const requiredFields = allFields.filter(field => field !== 'parts_used'&&field!=='failure_description');
+            if (requiredFields.includes(name)===false) return false
             let isValid = true;
             if (!value || (typeof value === 'string' && value.trim() === '')) {
                 isValid = false;
@@ -127,13 +164,58 @@ function AddComplaint(props){
     }
     const isValid=()=>{
         const allFields = Object.keys(formData);
-        for (const field of allFields){
+        const requiredFields = allFields.filter(field => field !== 'parts_used'&&field!=='failure_description');
+        for (const field of requiredFields){
             const value = formData[field];
             if(!value||(typeof value==='string' && value.trim()==='')) return false
         }
+        if (Object.values(formErrors).some(error=> error===true)){
+            return false
+        }
         return true;
     }
-
+    const handleAdd = async (e) => {
+        await refreshTokenIfNeeded(dispatch)
+        if (!props.check){
+            setFormLoading(true)
+            try{
+                await axios.post(`${mainAddress}/api/complaints`, { ...transformIdsFormData(formData), 
+                    date_refuse:formData.date_refuse.toLocaleDateString('en-CA'),
+                    recovery_date: formData.recovery_date.toLocaleDateString('en-CA')}, { withCredentials: true });
+                const response = await axios.get(`${mainAddress}/api/complaints`, {withCredentials:true})
+                if (response.data.last_page){
+                    navigate(`/complaint?page=${response.data.last_page}`)
+                }else{
+                    navigate(`/complaint?page=1`)
+                }
+                setFormLoading(false)
+            }catch(error){
+                alert(error.response.data);
+                setFormLoading(false)
+            }
+        }else{
+            if (isEditing){
+                setFormLoading(true)
+                try {
+                    await axios.put(`${mainAddress}/api/complaints`, { ...transformIdsFormData(formData), 
+                        date_refuse:formData.date_refuse.toLocaleDateString('en-CA'),
+                        recovery_date: formData.recovery_date.toLocaleDateString('en-CA')}, { withCredentials: true });
+                    setFetchedData(formData)
+                    setFormLoading(false)
+                    setIsEditing(false)
+                } catch(error){
+                    alert(error.response.data);
+                    setFormLoading(false)
+                }
+            }else{
+                setIsEditing(true)
+            }
+        }
+    }
+    const cancelEdit = async(e)=>{
+        setFormData(fetchedData)
+        setIsEditing(false)
+    }
     return (
     <div className="addcomplaint">
         <WhiteBox headerText={isChecking?`Релкамация ID:${id}`:'Добавление рекламации'}>
@@ -176,7 +258,7 @@ function AddComplaint(props){
                 name='date_refuse'
                 value={formData.date_refuse}
                 error={formErrors.date_refuse}
-                helperText={formData.recovery_date && formData.date_refuse && formData.recovery_date < formData.date_refuse?'Дата отказа не может быть позже даты восстановления':'Выберите дату'}
+                helperText={formData.recovery_date && formData.date_refuse && formData.recovery_date < formData.date_refuse?'Дата отказа не может быть позже даты восстановления':'Выберите корректную дату'}
                 onChange={handleChange}
                 loading={formLoading}
                 isReq={true}
@@ -254,7 +336,7 @@ function AddComplaint(props){
                 name='recovery_date'
                 value={formData.recovery_date}
                 error={formErrors.recovery_date}
-                helperText={formData.recovery_date && formData.date_refuse && formData.recovery_date < formData.date_refuse?'Дата восстановления не может быть раньше даты отказа':'Выберите дату'}
+                helperText={formData.recovery_date && formData.date_refuse && formData.recovery_date < formData.date_refuse?'Дата восстановления не может быть раньше даты отказа':'Выберите корректную дату'}
                 onChange={handleChange}
                 loading={formLoading}
                 isReq={true}
@@ -266,7 +348,7 @@ function AddComplaint(props){
                 name='downtime'
                 value={formData.downtime.toString()+' дней'}
                 onChange={handleChange}
-                loading={true}
+                loading={isEditing?true:isChecking?false:true}
                 isReq={false}
                 multiline={true}
             />
@@ -275,11 +357,28 @@ function AddComplaint(props){
                         type="submit"
                         variant="contained"
                         color="primary"
-                        onClick={()=>console.log(formData)}
-                        disabled={formLoading} >
+                        onClick={handleAdd}
+                        disabled={!isValid()||formLoading} >
                         {formLoading?<CircularProgress/>:<>Добавить</>}
                     </Button>
-                :<></>}
+                :<><Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        onClick={handleAdd}
+                        disabled={!isValid()||formLoading}>
+                            {formLoading?<CircularProgress/>:isEditing?'Сохранить':'Изменить'}
+                            
+                    </Button>
+                    {isEditing?(
+                        <Button 
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            onClick={cancelEdit}
+                            disabled={formLoading}>
+                                {formLoading?<CircularProgress/>:'Отменить'}
+                        </Button>):<></>}</>}
         </WhiteBox>
     </div>)
 }

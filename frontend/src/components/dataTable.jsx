@@ -279,7 +279,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                                     {columns.map((column) => (
                                         <TableCell key={column.field}
                                         className={windowWidth <= column.hideWhenWidth ? 'hidden-column' : ''}
-                                        
+                                        title={column.maxLength===undefined?undefined:row[column.field].length>column.maxLength?`${row[column.field]}`:undefined}
                                         style={{}}
                                         >{column.maxLength!=undefined?
                                             row[column.field].length>column.maxLength?`${row[column.field].slice(0,column.maxLength)}...`:row[column.field]

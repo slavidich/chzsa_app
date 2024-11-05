@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/to/<int:id>', get_to_id, name='to'),
 
     path('api/complaints', complaints, name='complaints'),
-
+    path('api/complaint/<int:id>', get_complaint_id, name='complaint'),
 
     path('api/search',searchdata, name='search' ),
 

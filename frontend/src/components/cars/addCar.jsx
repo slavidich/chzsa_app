@@ -108,6 +108,12 @@ function AddCar(props){
         if (!value || (typeof value === 'string' && value.trim() === '')) {
             isValid = false;
         }
+        if (name==='shipping_date'){
+            const date = new Date(value)
+            if (date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900){
+                isValid = false
+            }
+        }
         setFormErrors({
             ...formErrors,
             [name]: !isValid
@@ -128,7 +134,7 @@ function AddCar(props){
                 }
                 setFormLoading(false)
             } catch (error) {
-                alert(error);
+                alert(error.response.data);
                 setFormLoading(false)
             }
         } else{
@@ -141,9 +147,6 @@ function AddCar(props){
                     setFormLoading(false)
                     setIsEditing(false)
                 } catch (error) {
-                    setFormData({
-                        ...fetchedData, 
-                    })
                     alert(error.response.data);
                     setFormLoading(false)
                 }
@@ -166,13 +169,16 @@ function AddCar(props){
             const value = formData[field];
             if(!value||(typeof value==='string' && value.trim()==='')) return false
         }
-    
+        if (Object.values(formErrors).some(error=> error===true)){
+            return false
+        }
+        
         return true;
     };
 
     return (
     <div className="car">
-        <WhiteBox headerText={isChecking?`Машина ID:${id}`:'Добавление клиента'}>
+        <WhiteBox headerText={isChecking?`Машина ID:${id}`:'Добавление машины'}>
             
                 <EditableField
                     isEditing={isEditing}
@@ -323,7 +329,7 @@ function AddCar(props){
                     name='shipping_date'
                     value={formData.shipping_date}
                     error={formErrors.shipping_date}
-                    helperText='Заполните поле'
+                    helperText='Введите корректную дату'
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
