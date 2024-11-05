@@ -85,7 +85,7 @@ class Maintenance(models.Model): #ТО
         verbose_name_plural = "ТО"
 
 class Complaint(models.Model): # рекламация 
-    machine = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name='Машина')
+    machine = models.ForeignKey(Machine, on_delete=models.CASCADE, verbose_name='Машина', related_name='complaints')
     service_company = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name='Сервисная компания')
     date_refuse = models.DateField(verbose_name='Дата отказа')
     operating_hours = models.IntegerField(verbose_name='Наработка, м/час')

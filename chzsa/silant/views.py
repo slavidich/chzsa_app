@@ -64,7 +64,7 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token)
     }
 
-def paginate_queryset(model, request, serializer_class, sort_field='id', search_field=None, **filter_params):
+def paginate_queryset(model, request, serializer_class, sort_field='id', search_field=None, isService=False, service_id=0, **filter_params):
     page_size = request.query_params.get('page_size', 10)
     paginator = PageNumberPagination()
     paginator.page_size = page_size
@@ -74,8 +74,23 @@ def paginate_queryset(model, request, serializer_class, sort_field='id', search_
 
     if sort_order == 'desc':
         sort_field = f'-{sort_field}'
-
-    queryset = model.objects.all()
+    if isService:
+        if model==Machine:
+            queryset = Machine.objects.filter(
+                Q(maintenances__service_company_id=service_id) |
+                Q(complaints__service_company_id=service_id)  # фильтруем по сервисной организации
+            ).distinct().annotate(  # исключаем дубли и создаем аннотацию
+                search_string=Concat(
+                    F(f'client__last_name'),
+                    Value(' '),
+                    Left(F(f'client__first_name'), 1),
+                    Value('. ('),
+                    F(f'client__username'),
+                    Value(')')
+                )
+            )
+    else:
+        queryset = model.objects.all()
     if filter_params:
         queryset = queryset.filter(**filter_params)
 
@@ -99,24 +114,39 @@ def paginate_queryset(model, request, serializer_class, sort_field='id', search_
     #return paginator.get_paginated_response(serializer.data)
 
 
-def paginate_client_queryset(model, request, serializer_class, user='user', sort_field='id', page_size=10):
+def paginate_client_queryset(model, request, serializer_class, user='user', sort_field='id', page_size=10, isService=False, service_id=0):
     page_size = request.query_params.get('page_size', page_size)
     paginator = PageNumberPagination()
     paginator.page_size = page_size
 
     sort_order = request.query_params.get('sortOrder', 'asc')
     search_value = request.query_params.get('searchValue', None)
-
-    queryset = model.objects.annotate(
-        search_string=Concat(
-            F(f'{user}__last_name'),
-            Value(' '),
-            Left(F(f'{user}__first_name'), 1),
-            Value('. ('),
-            F(f'{user}__username'),
-            Value(')')
+    if isService:
+        service = Service.objects.get(id=service_id)
+        queryset = Machine.objects.filter(Q(maintenances__service_company_id=service_id)|
+                                          Q(complaints__service_company_id=service_id)
+              # фильтруем по сервисной организации
+        ).distinct().annotate(  # исключаем дубли и создаем аннотацию
+            search_string=Concat(
+                F(f'{user}__last_name'),
+                Value(' '),
+                Left(F(f'{user}__first_name'), 1),
+                Value('. ('),
+                F(f'{user}__username'),
+                Value(')')
+            )
         )
-    )
+    else:
+        queryset = Machine.objects.annotate(
+            search_string=Concat(
+                F(f'{user}__last_name'),
+                Value(' '),
+                Left(F(f'{user}__first_name'), 1),
+                Value('. ('),
+                F(f'{user}__username'),
+                Value(')')
+            )
+        )
     if sort_order == 'desc':
         sort_field = f'-{sort_field}'
 
@@ -341,22 +371,31 @@ def searchdata(request):
         serializer = SearchUserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif model=='machine': # поиск по зав. №
+        role_check = get_role_from_request(request)
+        client = get_user_from_request(request)
         search_term = request.query_params.get('search', None)
-        machines = Machine.objects.filter(serial_number__contains=search_term).order_by('id')
+        if role_check=='Клиент':
+            machines = Machine.objects.filter(Q(serial_number__contains=search_term)&Q(client=client)).order_by('id')
+        else:
+            machines = Machine.objects.filter(serial_number__contains=search_term).order_by('id')
         serializer = SearchMachinerSerializer(machines, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif model=='service':
+        role_check = get_role_from_request(request)
         search_term = request.query_params.get('search', None)
-        #services = Service.objects.filter(name__contains=search_term).order_by('id')
-        services = Service.objects.annotate(
-            search_string=Concat(
-                'name',
-                Value(' ('),
-                'user__username',
-                Value(')')
-            )
-        ).filter(Q(search_string__icontains=search_term)&Q(user__username__contains='service')).order_by('id')
-        serializer = SearchServiceSerializer(services, many=True)
+        if role_check=='Клиент':
+            services = Service.objects.filter(name__contains=search_term).order_by('id')
+            serializer = SearchServiceForClientSerializer(services, many=True)
+        else:
+            services = Service.objects.annotate(
+                search_string=Concat(
+                    'name',
+                    Value(' ('),
+                    'user__username',
+                    Value(')')
+                )
+            ).filter(Q(search_string__icontains=search_term)&Q(user__username__contains='service')).order_by('id')
+            serializer = SearchServiceSerializer(services, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -498,26 +537,36 @@ def get_service_id(request, id):
 def cars(request):
     role_check = get_role_from_request(request)
     if request.method == 'GET':
+        field_mapping = {
+            # вот тут надо придумать какой то sort_field для username, который состоит из
+            'username': 'client__username',
+            'technique_model': 'technique_model__name',
+            'engine_model': 'engine_model__name',
+            'transmission_model': 'transmission_model__name',
+            'driven_axle_model': 'driven_axle_model__name',
+            'steered_axle_model': 'steered_axle_model__name'
+        }
+        sort_field = request.query_params.get('sortField', 'id')
+        sort_field = field_mapping.get(sort_field, sort_field)
+
+        search_field = request.query_params.get('searchField', None)
+        search_field = field_mapping.get(search_field, search_field)
         if role_check=='Менеджер':
-            field_mapping = {
-                # вот тут надо придумать какой то sort_field для username, который состоит из
-                'username': 'client__username',
-                'technique_model': 'technique_model__name',
-                'engine_model': 'engine_model__name',
-                'transmission_model': 'transmission_model__name',
-                'driven_axle_model': 'driven_axle_model__name',
-                'steered_axle_model': 'steered_axle_model__name'
-            }
-            sort_field = request.query_params.get('sortField', 'id')
-            sort_field = field_mapping.get(sort_field, sort_field)
-
-            search_field = request.query_params.get('searchField', None)
-            search_field = field_mapping.get(search_field, search_field)
-
             if sort_field=='client__username' or search_field=='client__username': # это если сортировка
                 return paginate_client_queryset(model=Machine, request=request, serializer_class=MachineSerializer, sort_field='client__username', user='client')
             return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field, sort_field=sort_field)
-        else: get403()
+        elif role_check=='Сервисная организация':
+            service = Service.objects.get(user=get_user_from_request(request))
+            if sort_field == 'client__username' or search_field == 'client__username':  # это если сортировка
+                return paginate_client_queryset(Machine, request, MachineSerializer, sort_field=sort_field, user='client', isService=True, service_id=service.id)
+            return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field,
+                                     sort_field=sort_field, isService=True, service_id=service.id)
+        elif role_check=='Клиент':
+            client = get_user_from_request(request)
+            return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field,
+                                     sort_field=sort_field, client=client)
+
+        else: return get403()
     elif request.method=='POST':
         if role_check=='Менеджер':
             serial_number = request.data.get('serial_number')
@@ -531,7 +580,7 @@ def cars(request):
                 return Response('Машина добавлена', status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else: get403()
+        else: return get403()
     elif request.method == 'PUT':
         if role_check == 'Менеджер':
             machine_id = request.data.get('id')
@@ -546,12 +595,28 @@ def cars(request):
                 return Response('Машина изменена', status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else: get403()
+        else: return get403()
 
 @api_view(['GET'])
 def get_car_id(request, id):
     role_check = get_role_from_request(request)
-    return get_item_by_id(request, Machine, MachineViewSerializer, id)
+    if role_check=='Менеджер':
+        return get_item_by_id(request, Machine, MachineViewSerializer, id)
+    elif role_check=='Сервисная организация':
+        service = Service.objects.get(user=get_user_from_request(request))
+        machines_id = list(Machine.objects.filter(maintenances__service_company_id=service.id).values_list('id', flat=True))
+        machines_id2 = list(Machine.objects.filter(complaints__service_company_id=service.id).values_list('id', flat=True))
+        if id in machines_id or id in machines_id2:
+            return get_item_by_id(request, Machine, MachineViewSerializer, id)
+        else:
+            return get403()
+    elif role_check=='Клиент':
+        client = get_user_from_request(request)
+        machines_id = list(Machine.objects.filter(client=client).values_list('id', flat=True))
+        if id in machines_id:
+            return get_item_by_id(request, Machine, MachineViewSerializer, id)
+        else:
+            return get403()
 
 @api_view(['GET', 'POST', 'PUT'])
 def allto(request):
@@ -566,18 +631,42 @@ def allto(request):
         'order_date':'order_date',
     }
     if request.method == 'GET':
-        if role_check == 'Менеджер':
-            sort_field = request.query_params.get('sortField', 'id')
-            sort_field = field_mapping.get(sort_field, sort_field)
+        sort_field = request.query_params.get('sortField', 'id')
+        sort_field = field_mapping.get(sort_field, sort_field)
 
-            search_field = request.query_params.get('searchField', None)
-            search_field = field_mapping.get(search_field, search_field)
+        search_field = request.query_params.get('searchField', None)
+        search_field = field_mapping.get(search_field, search_field)
+        if role_check == 'Менеджер':
             if search_field=='service_company__name':
                 return paginate_service_queryset(Maintenance, request, AllToSerializer, sort_field=sort_field)
             return paginate_queryset(Maintenance, request, AllToSerializer, search_field=search_field, sort_field=sort_field)
+        elif role_check=='Сервисная организация':
+            service = Service.objects.get(user=get_user_from_request(request))
+            return paginate_queryset(Maintenance, request, AllToSerializer, search_field=search_field,
+                                     sort_field=sort_field, service_company=service)
+        elif role_check=='Клиент':
+            client = get_user_from_request(request)
+            return paginate_queryset(Maintenance, request, AllToSerializerForClients, search_field=search_field,
+                                     sort_field=sort_field, machine__client=client)
         else: get403()
     if request.method=='POST':
         if role_check=='Менеджер':
+            serializer = AddToSerializer(data=request.data)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('ТО добавлено', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif role_check=='Сервисная организация':
+            service = Service.objects.get(user=get_user_from_request(request))
+            request.data['service_company'] = service.id
+            serializer = AddToSerializer(data=request.data)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('ТО добавлено', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif role_check=='Клиент':
             serializer = AddToSerializer(data=request.data)
             if serializer.is_valid():
                 to = serializer.save()
@@ -595,7 +684,27 @@ def allto(request):
                 return Response('Машина изменена', status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else: get403()
+        elif role_check=='Сервисная организация':
+            to_id = request.data.get('id')
+            to = get_object_or_404(Maintenance, id=to_id)
+            service = Service.objects.get(user=get_user_from_request(request))
+            request.data['service_company'] = service.id
+            serializer = AddToSerializer(to, data=request.data, partial=True)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('Машина изменена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif role_check=='Клиент':
+            to_id = request.data.get('id')
+            to = get_object_or_404(Maintenance, id=to_id)
+            serializer = AddToSerializer(to, data=request.data, partial=True)
+            if serializer.is_valid():
+                to = serializer.save()
+                return Response('Машина изменена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:return  get403()
 
 @api_view(['GET'])
 def get_to_id(request, id):
@@ -603,7 +712,17 @@ def get_to_id(request, id):
     if role_check=='Менеджер':
         return get_item_by_id(request, Maintenance, ToViewSerializer, id)
     elif role_check=='Сервисная организация':
-        ... # здесь надо проверить, что сервис смотрит СВОИ то а не чужую!
+        service = Service.objects.get(user=get_user_from_request(request))
+        maintenance = Maintenance.objects.get(id=id)
+        if maintenance.service_company==service:
+            return get_item_by_id(request, Maintenance, ToViewSerializer, id)
+        else: return get403()
+    elif role_check=='Клиент':
+        client = get_user_from_request(request)
+        maintenance = Maintenance.objects.get(id=id)
+        if maintenance.machine.client==client:
+            return get_item_by_id(request, Maintenance, ToViewClientSerializer, id)
+        else: return get403()
 
 @api_view(['GET', 'POST', 'PUT'])
 def complaints(request):
@@ -615,19 +734,36 @@ def complaints(request):
         'recovery_method': 'recovery_method__name'
     }
     if request.method == 'GET':
-        if role_check=='Менеджер':
-            sort_field = request.query_params.get('sortField', 'id')
-            sort_field = field_mapping.get(sort_field, sort_field)
+        sort_field = request.query_params.get('sortField', 'id')
+        sort_field = field_mapping.get(sort_field, sort_field)
 
-            search_field = request.query_params.get('searchField', None)
-            search_field = field_mapping.get(search_field, search_field)
+        search_field = request.query_params.get('searchField', None)
+        search_field = field_mapping.get(search_field, search_field)
+        if role_check=='Менеджер':
             if search_field == 'service_company__name':
                 return paginate_service_queryset(Complaint, request, GetAllComplaints, sort_field=sort_field)
             return paginate_queryset(Complaint, request, GetAllComplaints, search_field=search_field,
                                      sort_field=sort_field)
+        elif role_check=='Сервисная организация':
+            service=Service.objects.get(user=get_user_from_request(request))
+            return paginate_queryset(Complaint, request, GetAllComplaints, search_field=search_field,
+                                     sort_field=sort_field, service_company=service)
+        elif role_check=='Клиент':
+            client = get_user_from_request(request)
+            return paginate_queryset(Complaint, request, GetAllComplaintsForClient, search_field=search_field,
+                                     sort_field=sort_field, machine__client=client)
         else: get403()
     if request.method=='POST':
         if role_check=='Менеджер':
+            serializer = PostComplaint(data=request.data)
+            if serializer.is_valid():
+                complaint = serializer.save()
+                return Response('Рекламация добавлена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif role_check=='Сервисная организация':
+            service = Service.objects.get(user=get_user_from_request(request))
+            request.data['service_company'] = service.id
             serializer = PostComplaint(data=request.data)
             if serializer.is_valid():
                 complaint = serializer.save()
@@ -645,6 +781,17 @@ def complaints(request):
                 return Response('Рекламация изменена', status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif role_check=='Сервисная организация':
+            complaint_id = request.data.get('id')
+            compaint = get_object_or_404(Complaint, id=complaint_id)
+            service = Service.objects.get(user=get_user_from_request(request))
+            request.data['service_company'] = service.id
+            serializer = PostComplaint(compaint, data=request.data, partial=True)
+            if serializer.is_valid():
+                complaint = serializer.save()
+                return Response('Рекламация изменена', status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -653,7 +800,18 @@ def get_complaint_id(request, id):
     if role_check=='Менеджер':
         return get_item_by_id(request, Complaint, GetFullComplaint, id)
     elif role_check=='Сервисная организация':
-        ... # здесь надо проверить, что сервис смотрит СВОИ то а не чужую!
+        service = Service.objects.get(user=get_user_from_request(request))
+        complaint = get_object_or_404(Complaint, id=id)
+        if complaint.service_company==service:
+            return get_item_by_id(request, Complaint, GetFullComplaint, id)
+        else: return get403()
+    elif role_check=='Клиент':
+        client = get_user_from_request(request)
+        complaint = get_object_or_404(Complaint, id=id)
+        if complaint.machine.client==client:
+            return get_item_by_id(request, Complaint, GetFullComplaintForClient, id)
+        else: return get403()
+    else:  return get403()
 @api_view(['POST'])
 def create_user(request):
     role_check = get_role_from_request(request)

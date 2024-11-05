@@ -9,9 +9,10 @@ import { EditableField, AutoCompleteSearch, EditableDateField, transformIdsFormD
 import {  Button, CircularProgress } from "@mui/material";
 import { useParams } from 'react-router-dom';
 import axios from "axios";
-
+import { useSelector } from "react-redux";
 
 function AddTo(props){
+    const role = useSelector(state=>state.auth.role)
     const now = new Date()
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -33,7 +34,7 @@ function AddTo(props){
     })
     const [formData, setFormData] = useState({
         machine: null, 
-        service_company: null,
+        service_company: role==='Сервисная организация'?'1':null,
         maintenance_type: null,
         maintenance_date: !isChecking? today: '',
         operating_hours:'',
@@ -62,7 +63,7 @@ function AddTo(props){
                 navigate('/404')
             }
             if (error.response && error.response.status === 403){
-                navigate('/403')
+                navigate('/forbidden')
             }
             console.log(error)
         }
@@ -81,20 +82,39 @@ function AddTo(props){
         validateField(name, value)
     };
     const validateField=(name, value)=>{
-        let isValid = true;
-        if (!value || (typeof value === 'string' && value.trim() === '')) {
-            isValid = false;
+        if (name==='maintenance_date'||name==='order_date'){
+            const date = new Date(value)
+            if (date.toString()==='Invalid Date'|| date>Date.now()+10000 || date.getFullYear()<1900){
+                setFormErrors({
+                    ...formErrors,
+                    [name]: true
+                })
+            }else{
+                setFormErrors({
+                    ...formErrors,
+                    [name]: false
+                })
+            }
+        }else{
+            let isValid = true;
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+                isValid = false;
+            }
+            setFormErrors({
+                ...formErrors,
+                [name]: !isValid
+            });
         }
-        setFormErrors({
-            ...formErrors,
-            [name]: !isValid
-        });
+        
     }
     const isValid=()=>{
         const allFields = Object.keys(formData);
         for (const field of allFields){
             const value = formData[field];
             if(!value||(typeof value==='string' && value.trim()==='')) return false
+        }
+        if (Object.values(formErrors).some(error=> error===true)){
+            return false
         }
         return true;
     }
@@ -109,11 +129,11 @@ function AddTo(props){
                     maintenance_date: formData.maintenance_date.toLocaleDateString('en-CA'),
                     order_date: formData.order_date.toLocaleDateString('en-CA')
                 }, {withCredentials:true})
-                const response = await axios.get(`${mainAddress}/api/to`, {withCredentials:true})
+                const response = await axios.get(`${mainAddress}/api/to?sortField=maintenance_date`, {withCredentials:true})
                 if (response.data.last_page){
-                    navigate(`/to?page=${response.data.last_page}`)
+                    navigate(`/to?sortField=maintenance_date&page=${response.data.last_page}`)
                 }else{
-                    navigate(`/to?page=1`)
+                    navigate(`/to?sortField=maintenance_date&page=1`)
                 }
             }catch(error){
 
@@ -172,7 +192,7 @@ function AddTo(props){
                 value={formData.maintenance_type}
                 error={formErrors.maintenance_type}
                 helperText='Выберите вид ТО'
-                placeholder="Введите названия сервиса"
+                placeholder="Введите названия ТО"
                 endpoint={`${mainAddress}/api/search?model=directory&entity_name=MAINTENANCE_TYPE`}
                 checkEndPoint={`directories`}
                 onChange={handleChange}
@@ -181,6 +201,7 @@ function AddTo(props){
                 canCheck={true}
             />
             {/* service*/}
+            {role==='Сервисная организация'?<></>:
             <AutoCompleteSearch
                 isEditing={isEditing}
                 label="Сервисная организация"
@@ -194,8 +215,8 @@ function AddTo(props){
                 onChange={handleChange}
                 loading={formLoading}
                 isReq={true}
-                canCheck={true}
-            />
+                canCheck={role==='Менеджер'?true:false}
+            />}
             {/* Дата проведения ТО */}
             <EditableDateField
                     isEditing={isEditing}

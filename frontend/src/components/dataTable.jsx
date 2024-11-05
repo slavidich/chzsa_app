@@ -88,7 +88,7 @@ function TablePaginationActions(props){
 function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc',
                         canAdd=false, actionOnAdd=undefined, 
                         canSearch=false}){
-    
+    columns = columns.filter(item=> item!==null)
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams();
     const [data, setData] = useState([]);

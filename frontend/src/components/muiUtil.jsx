@@ -167,7 +167,9 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
     };
 
     useEffect(() => {
-        if (isEditing ) {
+        if (isEditing && value && value.name ) {
+            getOptions(value.name)
+        }else{
             getOptions('')
         }
     }, [isEditing]);
@@ -255,7 +257,7 @@ export const AutoCompleteSearch = ({endpoint, checkEndPoint, isEditing, label, n
                             {value.name}
                         </Link>
                     ) : (
-                        <></>
+                        <>{value&&value.name}</>
                     )}
             </Typography>
             }

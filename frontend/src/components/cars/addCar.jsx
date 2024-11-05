@@ -8,9 +8,11 @@ import WhiteBox from "../WhiteBox.jsx";
 import { EditableField, AutoCompleteSearch, EditableDateField, transformIdsFormData } from "../muiUtil";
 import {  Button, CircularProgress } from "@mui/material";
 import { useParams } from 'react-router-dom';
+import { useSelector } from "react-redux";
 import axios from "axios";
 
 function AddCar(props){
+    const role = useSelector(state=>state.auth.role)
     const now = new Date()
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -86,6 +88,8 @@ function AddCar(props){
         }catch(error){
             if (error.response && error.response.status === 404) {
                 navigate('/404')
+            } else if (error.response && error.response.status === 403){
+                navigate('/forbidden')
             }
             console.log(error)
         }
@@ -126,11 +130,11 @@ function AddCar(props){
             setFormLoading(true)
             try {
                 await axios.post(`${mainAddress}/api/cars`, { ...transformIdsFormData(formData), shipping_date:formData.shipping_date.toLocaleDateString('en-CA') }, { withCredentials: true });
-                const response = await axios.get(`${mainAddress}/api/cars`, {withCredentials:true})
+                const response = await axios.get(`${mainAddress}/api/cars?sortField=shipping_date`, {withCredentials:true})
                 if (response.data.last_page){
-                    navigate(`/cars?page=${response.data.last_page}`)
+                    navigate(`/cars?sortField=shipping_date&page=${response.data.last_page}`)
                 }else{
-                    navigate(`/cars?page=1`)
+                    navigate(`/cars?sortField=shipping_date&page=1`)
                 }
                 setFormLoading(false)
             } catch (error) {
@@ -378,13 +382,14 @@ function AddCar(props){
                     helperText='Выберите клиента (username)'
                     endpoint={`${mainAddress}/api/search?model=client`}
                     checkEndPoint={`users`}
-                    canCheck={true}
+                    canCheck={role==='Менеджер'?true:false}
                     onChange={handleChange}
                     loading={formLoading}
                     isReq={true}
                 />
                 <div className="formButtons">
-                    {!props.check?
+                    
+                    {role==='Менеджер'?!props.check?
                         <Button
                             type="submit"
                             variant="contained"
@@ -411,7 +416,7 @@ function AddCar(props){
                                 onClick={cancelEdit}
                                 disabled={formLoading}>
                                     {formLoading?<CircularProgress/>:'Отменить'}
-                            </Button>):<></>}</>}
+                            </Button>):<></>}</>:<></>}
                 </div>
 
         </WhiteBox>

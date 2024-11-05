@@ -46,7 +46,10 @@ function App() {
         if (isAuthChecking) {
             return <div></div>;
         }
-        if (role!==requiredRole){
+        const isAuthorized = Array.isArray(requiredRole) 
+            ? requiredRole.includes(role) 
+            : role === requiredRole;
+        if (!isAuthorized) {
             return <Navigate to="/forbidden" replace />;
         }
         return children
@@ -79,11 +82,11 @@ function App() {
                     <Route path="/cars/:id" element={<AddCar check={true}/>} />
 
                     <Route path="/to" element={<AllTo/>}/>
-                    <Route path="/to/new" element={<AddTo/>}/>
+                    <Route path="/to/new" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AddTo/></ProtectedRoute>}/>
                     <Route path="/to/:id" element={<AddTo check={true}/>} />
 
                     <Route path='/complaint' element={<Complaints/>}/>
-                    <Route path='/complaint/new' element={<AddComplaint/>}/>
+                    <Route path='/complaint/new' element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация']}><AddComplaint/></ProtectedRoute>}/>
                     <Route path="/complaint/:id" element={<AddComplaint check={true}/>} />
 
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>

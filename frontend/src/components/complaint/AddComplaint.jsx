@@ -9,8 +9,10 @@ import { EditableField, AutoCompleteSearch, EditableDateField, transformIdsFormD
 import {  Button, CircularProgress } from "@mui/material";
 import { useParams } from 'react-router-dom';
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 function AddComplaint(props){
+    const role = useSelector(state=>state.auth.role)
     const now = new Date()
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -35,7 +37,7 @@ function AddComplaint(props){
     })
     const [formData, setFormData] = useState({
         machine: null, 
-        service_company: null,
+        service_company: role==='Сервисная организация'?'1':null,
         date_refuse: today,
         operating_hours: '',
         failure_node:null,
@@ -67,6 +69,9 @@ function AddComplaint(props){
         }catch(error){
             if (error.response && error.response.status === 404) {
                 navigate('/404')
+            }
+            if (error.response && error.response.status === 403) {
+                navigate('/forbidden')
             }
             console.log(error)
         }
@@ -182,11 +187,11 @@ function AddComplaint(props){
                 await axios.post(`${mainAddress}/api/complaints`, { ...transformIdsFormData(formData), 
                     date_refuse:formData.date_refuse.toLocaleDateString('en-CA'),
                     recovery_date: formData.recovery_date.toLocaleDateString('en-CA')}, { withCredentials: true });
-                const response = await axios.get(`${mainAddress}/api/complaints`, {withCredentials:true})
+                const response = await axios.get(`${mainAddress}/api/complaints?sortField=date_refuse`, {withCredentials:true})
                 if (response.data.last_page){
-                    navigate(`/complaint?page=${response.data.last_page}`)
+                    navigate(`/complaint?sortField=date_refuse&page=${response.data.last_page}`)
                 }else{
-                    navigate(`/complaint?page=1`)
+                    navigate(`/complaint?sortField=date_refuse&page=1`)
                 }
                 setFormLoading(false)
             }catch(error){
@@ -236,6 +241,7 @@ function AddComplaint(props){
                 canCheck={true}
             />
             {/* service*/}
+            {role==='Сервисная организация'?<></>:
             <AutoCompleteSearch
                 isEditing={isEditing}
                 label="Сервисная организация"
@@ -249,8 +255,8 @@ function AddComplaint(props){
                 onChange={handleChange}
                 loading={formLoading}
                 isReq={true}
-                canCheck={true}
-            />
+                canCheck={role==='Клиент'?false:true}
+            />}
             {/* Дата отказа */}
             <EditableDateField
                 isEditing={isEditing}
@@ -352,7 +358,7 @@ function AddComplaint(props){
                 isReq={false}
                 multiline={true}
             />
-            {!props.check?
+            {role!='Клиент'?!props.check?
                     <Button
                         type="submit"
                         variant="contained"
@@ -378,7 +384,7 @@ function AddComplaint(props){
                             onClick={cancelEdit}
                             disabled={formLoading}>
                                 {formLoading?<CircularProgress/>:'Отменить'}
-                        </Button>):<></>}</>}
+                        </Button>):<></>}</>:<></>}
         </WhiteBox>
     </div>)
 }

@@ -21,6 +21,7 @@ function Directories(){
     const navigate = useNavigate()
     const dispatch = useDispatch();
     const [activeType, setActiveType] = useState(searchParams.get('entity_name')||directorieslist[0][0]); // первый тип активный
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(()=>{
         const entityName = searchParams.get('entity_name');
@@ -28,6 +29,17 @@ function Directories(){
             setActiveType(entityName);
         }
     }, [searchParams])
+    
+
+    useEffect(() => {
+        
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     
     const memoizedParams = useMemo(() => ({
         entity_name: activeType
@@ -56,7 +68,7 @@ function Directories(){
                     columns={[
                         {field: "id", header: "ID"},
                         {field: "name", header: "Название", maxLength:20},
-                        {field: "description", header: "Описание", maxLength:20, hideWhenWidth:900},
+                        windowWidth>900?{field: "description", header: "Описание", maxLength:20}:null,
                     ]}
                     params={memoizedParams}
                     path='/api/directories'
