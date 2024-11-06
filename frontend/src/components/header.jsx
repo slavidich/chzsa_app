@@ -1,13 +1,19 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import '../styles/header.scss'
 import Logored from '../img/logored.svg' 
 import Telegram from '../img/tg.svg' 
 import { useSelector, useDispatch } from 'react-redux'
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
-
-
+import {  useMediaQuery } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import DirectorySVG from '../img/directory.svg'
+import ClientSVG from '../img/client.svg';
+import ServiceSVG from '../img/service.svg'
+import CarSVG from '../img/cars.svg'
+import ToSVG from '../img/to1.svg'
+import ComplaintSVG from '../img/complaint.svg'
 
 function Header(){
     const dispatch = useDispatch();
@@ -15,12 +21,25 @@ function Header(){
     const isAuthInProgress = useSelector(state => state.auth.isAuthInProgress)
     const username = useSelector(state => state.auth.username)
     const navigate = useNavigate()
+    const location = useLocation()
     const role = useSelector(state=>state.auth.role)
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('740'));
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [activeLink, setActiveLink] = useState('');
 
+    
     const handleLogout = () =>{
         dispatch(logoutSuccess())
         navigate('/')
     }
+    useEffect(()=>{
+        setActiveLink(location.pathname)
+    }, [location])
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
     return (
     <div className={isAuth?"header":"header-low header "}>
         <div className="main">
@@ -44,7 +63,7 @@ function Header(){
                     <>
                         {isAuth?
                             <>
-
+                                <p>{role}</p>
                                 <p>{username}</p>
                                 <p onClick={handleLogout}>Выйти</p>
                             </>
@@ -56,17 +75,29 @@ function Header(){
             </div>
 
         </div>
+        
         {isAuth?
-            <div className="buttons">
-                {role==='Менеджер'?<>
-                    <Link to='/directories'>Справочники</Link>
-                    <Link to='/users'>Клиенты</Link>
-                    <Link to='/services'>Сервисы</Link>
-                    </>:<></>}
-                <Link to='/cars?sortField=shipping_date'>Машины</Link>
-                <Link to='/to?sortField=maintenance_date'>ТО</Link>
-                <Link to='/complaint?sortField=date_refuse'>Рекламации</Link>
-            </div>
+            (<div className="buttons">
+                
+                {isMobile?
+                    <div className="center mobile-menu">
+
+                    </div>
+                :<>
+                    <div className='left'></div>
+                    <div className='center'>{role==='Менеджер'?<>
+                        <Link className={activeLink==='/directories'?'active':undefined} to='/directories'>Справочники<DirectorySVG className='svgdir'/></Link>
+                        <Link className={activeLink==='/users'?'active':undefined} to='/users'>Клиенты<ClientSVG className='svgclient'/></Link>
+                        <Link className={activeLink==='/services'?'active':undefined} to='/services'>Сервисы<ServiceSVG className='svgdir'/></Link>
+                        </>:<></>}
+                    <Link className={activeLink==='/cars'?'active':undefined} to='/cars?sortField=shipping_date'>Машины<CarSVG className='svgcar'/></Link>
+                    <Link className={activeLink==='/to'?'active':undefined} to='/to?sortField=maintenance_date'>ТО<ToSVG className='svgto'/></Link>
+                    <Link className={activeLink==='/complaint'?'active':undefined} to='/complaint?sortField=date_refuse'>Рекламации<ComplaintSVG className='svgcom'/></Link></div>
+                    <div className='right'></div>
+                </>    
+                }
+                
+            </div>)
         :
             <></>
         }
