@@ -17,3 +17,35 @@
     }
         
 }
+
+.items{
+    .whitebox{
+        padding:15px;
+        margin: 5vw 0 5vw 0 ;
+        .box-header{
+            font-size:20px;
+            margin-bottom:5px;
+        }
+        div{
+            margin-top:5px;
+            margin-bottom:5px;
+            h6{
+                font-size:18px;
+            }
+            p{
+                font-size:16px;
+            }
+        }
+        .itembutton{
+            display:flex;
+            width:100%;
+            justify-content: center;
+            button{
+                width:50% !important;
+                margin-top:5px;
+                font-size:15px;
+            }
+        }
+    }
+        
+    }

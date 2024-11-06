@@ -22,7 +22,7 @@ function Directories(){
     const dispatch = useDispatch();
     const [activeType, setActiveType] = useState(searchParams.get('entity_name')||directorieslist[0][0]); // первый тип активный
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
+    const collapseWidth = 740
     useEffect(()=>{
         const entityName = searchParams.get('entity_name');
         if (entityName && entityName !== activeType) {
@@ -68,7 +68,7 @@ function Directories(){
                     columns={[
                         {field: "id", header: "ID"},
                         {field: "name", header: "Название", maxLength:20},
-                        windowWidth>900?{field: "description", header: "Описание", maxLength:20}:null,
+                        windowWidth>900||windowWidth<collapseWidth?{field: "description", header: "Описание", maxLength:20}:null,
                     ]}
                     params={memoizedParams}
                     path='/api/directories'
@@ -77,7 +77,7 @@ function Directories(){
                     canSearch={true}
                     canChange={true}
                     actionOnAdd={()=>{navigate(`new?entity_name=${activeType}`, {state:{from: location.pathname+location.search}})}}
-
+                    rowname="Справочник"
                 />
             </div>
             

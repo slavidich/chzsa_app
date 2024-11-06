@@ -9,7 +9,7 @@ function Services(){
     const dispatch = useDispatch();
 
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
+    const collapseWidth = 740
     useEffect(() => {
         
         const handleResize = () => {
@@ -28,14 +28,15 @@ function Services(){
             {field: "name", header: "Название", maxLength:15,},
             windowWidth>1200?{field: "description", header: "Описание", maxLength:15}:null,
             windowWidth>800?{field: "user_first_name", header: "Имя директора", maxLength:15}:null,
-            windowWidth>800?{field: "user_last_name", header: "Фамилия директора", maxLength:15}:null,
-            windowWidth>1200?{field: "user_email", header: "email", maxLength:15}:null,
+            windowWidth>800||windowWidth<collapseWidth?{field: "user_last_name", header: "Фамилия директора", maxLength:15}:null,
+            windowWidth>1200||windowWidth<collapseWidth?{field: "user_email", header: "email", maxLength:15}:null,
         ]}
         path='/api/services'
         dispatch={dispatch}
         canAdd={true}
         canSearch={true}
         canChange={true}
+        rowname="Сервисная организация"
     />
     
     </div>)

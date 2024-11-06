@@ -35,10 +35,27 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            @media (max-width: 550px) {
+                justify-content: end;
+            }
+            .book{
+                @media (max-width: 800px) {
+                    font-size:0px
+                }
+            }
+            .book::after{
+                @media (max-width: 800px) {
+                    content:'Мой силант';
+                    font-size:22px
+                }
+            }
             .telegram{
                 display:flex;
                 justify-content: center;
                 align-items: center;
+                @media (max-width: 550px) {
+                    display:none
+                }
                 p{
                     margin-right: 10px;
                     font-size: 20px;
@@ -57,14 +74,22 @@
             flex-direction: column;
             justify-content: center;
             align-items: flex-end;
-            
+            @media (max-width: 550px) {
+                width:30%
+            }
             p{
                 font-size:20px;
                 margin: 0;
                 color:black;
+                @media (max-width: 550px) {
+                    white-space: nowrap;
+                }
             }
             p:nth-child(1){
-                font-size:15px
+                font-size:15px;
+                @media (max-width: 550px) {
+                    font-size:15px;
+                }
             }
             a{
                 font-size: 26px;
@@ -150,11 +175,49 @@
             align-items: flex-start;
            
         }
-        .mobile-menu{
+        .menu-button{
             width:100%;
             height: 100%;
             cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            .menusvg{
+                height: 60%;
+            }
+            .mobile-menu{
+                display:flex;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 1000;
+                background-color: white;
+                transform: translateY(-100%);
+                transition: transform 0.5s ease;
+                a{
+                    padding:20px;
+                    border-radius: 0px;
+                    margin-right:0px;
+                }
+                
+            }
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999; 
+            }
+            .mobile-menu.open{
+                transform: translateY(0);
+            }
+            
         }
+        
         
     }
 }

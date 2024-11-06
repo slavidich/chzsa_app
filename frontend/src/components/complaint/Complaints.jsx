@@ -8,7 +8,7 @@ function Complaints(){
     const dispatch = useDispatch();
     const role = useSelector(state=>state.auth.role)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
+    const collapseWidth = 740
     useEffect(() => {
         
         const handleResize = () => {
@@ -25,16 +25,17 @@ function Complaints(){
                     {field: "id", header: "ID"},
                     {field: "machine", header: "Зав. № машины", maxLength:15},
                     {field: "date_refuse", header: "Дата отказа", maxLength:20},
-                    windowWidth>900?(role!='Сервисная организация'?{field: "service_company", header: "Сервисная организация", maxLength:20}
+                    windowWidth>900||windowWidth<collapseWidth?(role!='Сервисная организация'?{field: "service_company", header: "Сервисная организация", maxLength:20}
                     :null):null,
-                    windowWidth>900?{field: "failure_node", header: "Узел отказа", maxLength:20}:null,
-                    windowWidth>900?{field: "recovery_method", header: "Метод восстановления", maxLength:20}:null,
-                    windowWidth>900?{field: "recovery_date", header: "Дата восстановления", maxLength:20}:null,
+                    windowWidth>900||windowWidth<collapseWidth?{field: "failure_node", header: "Узел отказа", maxLength:20}:null,
+                    windowWidth>900||windowWidth<collapseWidth?{field: "recovery_method", header: "Метод восстановления", maxLength:20}:null,
+                    windowWidth>900||windowWidth<collapseWidth?{field: "recovery_date", header: "Дата восстановления", maxLength:20}:null,
                 ]}
                 path='/api/complaints'
                 dispatch={dispatch}
                 canAdd={['Менеджер', 'Сервисная организация'].includes(role)?true:false}
                 canSearch={true}
+                rowname="Рекламация"
             />
         </div>
     )

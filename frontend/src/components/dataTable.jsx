@@ -9,8 +9,9 @@ import LastPageIcon from '@mui/icons-material/LastPage';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import "../styles/dataTable.scss"
-import { theme } from './muiUtil';
+import { EditableField, theme } from './muiUtil';
 import { useSearchParams } from 'react-router-dom';
+import WhiteBox from './WhiteBox.jsx'
 
 
 export const getData = async({path, params, dispatch, setLoading, setData, setTotalPages, setTotalCount, page_size})=>{
@@ -87,7 +88,7 @@ function TablePaginationActions(props){
 }
 function UniversalTable({columns, path, params, dispatch, pageSize = 10, defaultSortField='id', defaultSortOrder='asc',
                         canAdd=false, actionOnAdd=undefined, 
-                        canSearch=false}){
+                        canSearch=false, collapseWidth=740, rowname=''}){
     columns = columns.filter(item=> item!==null)
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams();
@@ -193,7 +194,76 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
         setSearchField('')
     }
 
-    return(<ThemeProvider theme={theme}>
+    return(
+    <ThemeProvider theme={theme}>
+        {windowWidth<collapseWidth?
+            <>
+            <div className="filters">
+                <Paper sx={{
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}> 
+                        {canAdd&&
+                        <Button variant="contained" color="primary" onClick={handleAddClick}>
+                            Добавить
+                        </Button>
+                        }
+                        
+                        <Select
+                            value={searchFieldInput}
+                            onChange={(e) => setSearchField(e.target.value)}
+                            displayEmpty
+                            sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}}
+                        >
+                        <MenuItem sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}}value='' disabled>
+                            Выберите поле для поиска
+                        </MenuItem>
+                        {columns.map((column) => (
+                            <MenuItem sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
+                                {column.header}
+                            </MenuItem>
+                        ))}
+                        </Select>
+                        <div>
+                            <TextField
+                                label="Поиск"
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                disabled={searchFieldInput===''? true:false}
+                            />
+                            <Button variant="contained" onClick={handleSearch} disabled={searchText!=''?false:true}>
+                                Искать
+                            </Button>
+                            <Button variant="contained" onClick={handleSearchCancel} disabled={searchValue!=''?false:true}>
+                                Сбросить
+                            </Button>
+                        </div>
+                </Paper>
+            </div>
+            <div className='items'>
+                {data.map((row, index)=>{
+                    
+                    return(
+                        <WhiteBox  key={index} headerText={`${rowname} ID:${row['id']}`} className='item'>
+                            {columns.map((column, index)=>{
+                                if (column.field=='id') return null
+                                return <EditableField
+                                    name={column.header}
+                                    isEditing={false}
+                                    label={column.header}
+                                    value={row[column.field]}
+                                />
+                            })}
+                            <div className='itembutton'>
+                                <Button variant="contained" color="primary" onClick={()=>handleRowClick(row)}>
+                                    Подробнее
+                                </Button>
+                            </div>
+                        </WhiteBox>)
+                })}
+            </div>
+            </>
+        :
         <Paper>
                 {canSearch&&
                 <div className="table">
@@ -305,9 +375,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 ActionsComponent={TablePaginationActions}
             />
-            
-                
-        </Paper>
+        </Paper>}
     </ThemeProvider>
     )
 }

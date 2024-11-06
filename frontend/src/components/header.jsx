@@ -14,6 +14,7 @@ import ServiceSVG from '../img/service.svg'
 import CarSVG from '../img/cars.svg'
 import ToSVG from '../img/to1.svg'
 import ComplaintSVG from '../img/complaint.svg'
+import MenuSVG from '../img/menu.svg'
 
 function Header(){
     const dispatch = useDispatch();
@@ -27,15 +28,20 @@ function Header(){
     const isMobile = useMediaQuery(theme.breakpoints.down('740'));
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [activeLink, setActiveLink] = useState('');
-
+    const[animation, setAnimation] = useState(false)
     
     const handleLogout = () =>{
         dispatch(logoutSuccess())
         navigate('/')
+        
     }
     useEffect(()=>{
         setActiveLink(location.pathname)
     }, [location])
+
+    useEffect(()=>{
+        setAnimation(isMenuOpen)
+    },[isMenuOpen])
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -47,7 +53,7 @@ function Header(){
                 <Link to='/'><Logored/></Link>
             </div>
             <div className="contacts">
-                <p>Электронная сервисная книжка "Мой силант"</p>
+                <p className='book'>Электронная сервисная книжка "Мой силант"</p>
                 <div className="telegram">
                     <p>+7(8352)20-12-09</p>
                     <Telegram></Telegram>
@@ -80,8 +86,22 @@ function Header(){
             (<div className="buttons">
                 
                 {isMobile?
-                    <div className="center mobile-menu">
-
+                    <div className="center menu-button" onClick={toggleMenu}>
+                        <MenuSVG className='menusvg'/>
+                        {isMenuOpen &&
+                            <>
+                                <div className="overlay" onClick={toggleMenu}></div>
+                                <div className={`mobile-menu ${animation ? 'open' : ''}`}>
+                                    {role==='Менеджер'?<>
+                                        <Link className={activeLink==='/directories'?'active':undefined} to='/directories'>Справочники<DirectorySVG className='svgdir'/></Link>
+                                        <Link className={activeLink==='/users'?'active':undefined} to='/users'>Клиенты<ClientSVG className='svgclient'/></Link>
+                                        <Link className={activeLink==='/services'?'active':undefined} to='/services'>Сервисы<ServiceSVG className='svgdir'/></Link>
+                                        </>:<></>}
+                                    <Link className={activeLink==='/cars'?'active':undefined} to='/cars?sortField=shipping_date'>Машины<CarSVG className='svgcar'/></Link>
+                                    <Link className={activeLink==='/to'?'active':undefined} to='/to?sortField=maintenance_date'>ТО<ToSVG className='svgto'/></Link>
+                                    <Link className={activeLink==='/complaint'?'active':undefined} to='/complaint?sortField=date_refuse'>Рекламации<ComplaintSVG className='svgcom'/></Link>
+                                </div>
+                            </>}
                     </div>
                 :<>
                     <div className='left'></div>

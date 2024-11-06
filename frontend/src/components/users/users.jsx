@@ -8,7 +8,7 @@ import UniversalTable from "../dataTable.jsx";
 function Users(){
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
-
+    
     return(
         <div className="users">
             <UniversalTable
