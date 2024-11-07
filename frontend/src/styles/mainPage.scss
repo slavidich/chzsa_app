@@ -1,1 +1,68 @@
 @import "../styles/colors.scss";
+
+.mainpage{
+    .center{
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        svg{
+            transform: scale(2);
+            color: $third-color
+        }
+    }
+    .error{
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        margin-top:25px;
+        height: 50px;
+        color: $second-color;
+        font-size:25px;
+    }
+    .whitebox{
+        margin-top:3vw;
+        max-width: 1000px;
+        padding: 20px min(6vw,130px) 20px min(6vw,130px);
+        .box-header{
+            text-align: center;
+            margin-top:5px;
+            margin-bottom:20px;
+            @media (max-width: 600px) {
+                font-size:18px;
+                white-space: normal;
+                padding: 20px 2vw 20px 2vw;
+            }
+        }
+        .search{
+            display:flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: stretch;
+            width:100%;
+            p{
+                font-size:18px;
+                white-space: nowrap;
+                align-self: center;
+                margin: 0 10px 0 0 ;
+                @media (max-width: 600px) {
+                    font-size:14px;
+                    white-space: normal;
+                }
+                @media (max-width: 450px) {
+                    display:none
+                }
+            }
+            div{
+                max-width:480px
+            }
+            button{
+                
+               
+                margin-left: 10px;
+                
+            }
+        }
+        
+    }
+}

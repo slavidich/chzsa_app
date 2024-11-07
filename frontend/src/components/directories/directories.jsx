@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import UniversalTable from "../dataTable.jsx";
 import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
-
+import { MenuItem, Select } from "@mui/material";
 export const directorieslist = [
     ['TECHNIQUE_MODEL', 'Модель техники'],
     ['ENGINE_MODEL', 'Модель двигателя'],
@@ -55,13 +55,34 @@ function Directories(){
     }
     return(
         <div className='directories'>
+            {windowWidth<collapseWidth?<>
+                <h1 style={{textAlign:'center'}}>Справочники</h1>
+                <div className='mobiletypes'>
+                    <h3 style={{textAlign:'center'}}>
+                        Тип справочника
+                    </h3>
+                    <Select
+                        value={activeType}
+                        onChange={(e) => handleChangeType(e.target.value)}
+                        displayEmpty
+                        
+                    >
+                        {directorieslist.map(([key, label])=>(
+                            <MenuItem key={key} value={key}>
+                                {label}
+                            </MenuItem>
+                        ))}
+
+                    </Select>
+                </div>
+                </>:
             <div className='types'>
                 {directorieslist.map(([key, label]) => (
                 <p key={key} onClick={() => handleChangeType(key)} className={activeType === key ? 'active' : ''}>
                     {label}
                 </p>
                 ))}
-            </div>
+            </div>}
         
             <div className='list'>
                 <UniversalTable

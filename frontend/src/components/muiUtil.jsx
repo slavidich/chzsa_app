@@ -17,6 +17,11 @@ export const theme = createTheme({
             'sans-serif',
         ].join(','),
     },
+    palette: {
+        primary: {
+            main: '#163E6C', // Основной цвет для кнопок и других компонентов
+        },
+    },
 });
 
 export const RequiredStar =()=> <span style={{ color: 'red' }}> *</span>

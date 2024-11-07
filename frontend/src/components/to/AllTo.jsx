@@ -20,6 +20,7 @@ function AllTo(){
     }, []);
     return(
     <div className="to">
+        {windowWidth<collapseWidth&&<h1 style={{textAlign:'center'}}>ТО</h1>}
         <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},

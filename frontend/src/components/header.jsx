@@ -15,6 +15,7 @@ import CarSVG from '../img/cars.svg'
 import ToSVG from '../img/to1.svg'
 import ComplaintSVG from '../img/complaint.svg'
 import MenuSVG from '../img/menu.svg'
+import {logout} from './authUtils'
 
 function Header(){
     const dispatch = useDispatch();
@@ -30,10 +31,9 @@ function Header(){
     const [activeLink, setActiveLink] = useState('');
     const[animation, setAnimation] = useState(false)
     
-    const handleLogout = () =>{
-        dispatch(logoutSuccess())
+    const handleLogout =async() =>{
+        await logout(dispatch)
         navigate('/')
-        
     }
     useEffect(()=>{
         setActiveLink(location.pathname)

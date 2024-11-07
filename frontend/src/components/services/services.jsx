@@ -21,6 +21,7 @@ function Services(){
     }, []);
 
     return(<div className="services">
+        {windowWidth<collapseWidth&&<h1 style={{textAlign:'center'}}>Сервисы</h1>}
     <UniversalTable
         columns={[
             {field: "id", header: "ID"},

@@ -4,12 +4,12 @@ import {Routes, Route} from "react-router-dom"
 import "../styles/app.scss";
 import Header from './header.jsx'
 import Footer from './footer.jsx'
-
+import MainPage from './main.jsx'
 import { checkAuthStatus } from './authUtils';
 import { Navigate } from "react-router-dom";
 
 const LoginPage = React.lazy(()=> import('./loginPage.jsx'))
-const MainPage = React.lazy(()=> import('./mainPage.jsx'))
+
 
 const Directories = React.lazy(()=>import('./directories/directories.jsx'))
 const AddDirectory = React.lazy(()=>import('./directories/AddDirectory.jsx'))
@@ -77,17 +77,17 @@ function App() {
                     <Route path="/services" element={<ProtectedRoute requiredRole='Менеджер'><Services/></ProtectedRoute>}/>
                     <Route path="/services/new" element={<ProtectedRoute requiredRole='Менеджер'><AddService/></ProtectedRoute>}/>
                     <Route path="/services/:id" element={<ProtectedRoute requiredRole='Менеджер'><CheckService/></ProtectedRoute>}/>
-                    <Route path="/cars" element={<Cars/>} />
+                    <Route path="/cars" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><Cars/></ProtectedRoute>} />
                     <Route path="/cars/new" element={<ProtectedRoute requiredRole='Менеджер'><AddCar/></ProtectedRoute>} />
-                    <Route path="/cars/:id" element={<AddCar check={true}/>} />
+                    <Route path="/cars/:id" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AddCar check={true}/></ProtectedRoute>} />
 
-                    <Route path="/to" element={<AllTo/>}/>
+                    <Route path="/to" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AllTo/></ProtectedRoute>}/>
                     <Route path="/to/new" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AddTo/></ProtectedRoute>}/>
-                    <Route path="/to/:id" element={<AddTo check={true}/>} />
+                    <Route path="/to/:id" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AddTo check={true}/></ProtectedRoute>} />
 
-                    <Route path='/complaint' element={<Complaints/>}/>
+                    <Route path='/complaint' element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><Complaints/></ProtectedRoute>}/>
                     <Route path='/complaint/new' element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация']}><AddComplaint/></ProtectedRoute>}/>
-                    <Route path="/complaint/:id" element={<AddComplaint check={true}/>} />
+                    <Route path="/complaint/:id" element={<ProtectedRoute requiredRole={['Менеджер','Сервисная организация','Клиент']}><AddComplaint check={true}/></ProtectedRoute>} />
 
                     <Route path='/forbidden' element={<div className='e404'><p>403... Недостаточно прав</p></div>}/>
                     

@@ -268,6 +268,8 @@ def login_view(request):
         return Response({'error': 'Введите и имя пользователя, и пароль'}, status=status.HTTP_400_BAD_REQUEST)
 
     user = authenticate(username=username, password=password)
+    if not user:
+        return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
     group = user.groups.all()[0]
     if user is not None:
         tokens = get_tokens_for_user(user)
@@ -296,6 +298,13 @@ def login_view(request):
         return response
     else:
         return Response({'error': 'Неверные имя пользователя или пароль'}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+def logout(request):
+    response = JsonResponse({'message': 'Logged out successfully'})
+    response.delete_cookie('access_token', path='/', domain='127.0.0.1')
+    response.delete_cookie('refresh_token', path='/api/token', domain='127.0.0.1')
+    return response
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE']) # все это для справочника менеджеров
 def directories(request):
@@ -334,12 +343,14 @@ def directories(request):
 @api_view(['GET'])
 def get_directory(request, id):
     role_check = get_role_from_request(request)
-    if role_check== 'Anon':
-        return get403()
     return get_item_by_id(request, Directory, DirectorySerializer, id)
 
 @api_view(['GET']) # поиск для ВСЕГО autocomplete полей
 def searchdata(request):
+    role_check = get_role_from_request(request)
+    if role_check == 'Anon':
+        return get403()
+
     model = request.query_params.get('model')
     if model=='directory':
         entity_name = request.query_params.get('entity_name', None)
@@ -565,6 +576,11 @@ def cars(request):
             client = get_user_from_request(request)
             return paginate_queryset(Machine, request, MachineSerializer, search_field=search_field,
                                      sort_field=sort_field, client=client)
+        elif role_check=='Anon':
+            machine = get_object_or_404(Machine, serial_number=request.query_params['serial_number'])
+            print(request.query_params['serial_number'])
+            print(machine)
+            return get_item_by_id(request, Machine, MachineViewAnonSerializer, machine.id)
 
         else: return get403()
     elif request.method=='POST':

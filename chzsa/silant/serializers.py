@@ -130,6 +130,23 @@ class MachineViewSerializer(serializers.ModelSerializer):
             'equipment',
             'client',
         ]
+class MachineViewAnonSerializer(serializers.ModelSerializer):
+    class Meta:
+        depth = 1
+        model = Machine
+        fields = [
+            'id',
+            'serial_number',
+            'technique_model',
+            'engine_model',
+            'engine_serial_number',
+            'transmission_model',
+            'transmission_serial_number',
+            'driven_axle_model',
+            'driven_axle_serial_number',
+            'steered_axle_model',
+            'steered_axle_serial_number',
+        ]
 
 class SearchMachinerSerializer(serializers.ModelSerializer):
     class Meta:

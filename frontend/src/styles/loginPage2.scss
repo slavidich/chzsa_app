@@ -1,0 +1,33 @@
+@import "../styles/colors.scss";
+
+.loginpage{
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    .whitebox{
+        .box-header{
+            text-align: center;
+            font-size:35px;
+            margin-top:15px;
+            margin-bottom:5px;
+        }
+        div{
+            margin-top: 20px;
+        }
+        button{
+            margin-top:40px;
+            margin-left:25%;
+            width:50%;
+            height: 50px;
+        }
+        .error{
+            margin-top:35px;
+            p{
+                font-size:20px;
+                color:$second-color;
+                text-align:center;
+            }
+        }
+    }
+}

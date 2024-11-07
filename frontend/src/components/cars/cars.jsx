@@ -20,6 +20,7 @@ function Cars(){
     }, []);
     return (
         <div className="cars">
+            {windowWidth<collapseWidth&&<h1 style={{textAlign:'center'}}>Машины</h1>}
             <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},

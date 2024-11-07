@@ -1,17 +1,25 @@
 import React from "react";
-import '../styles/loginPage.scss'
+import '../styles/loginPage2.scss'
 import Logored from '../img/logored.svg' 
 import { useSelector, useDispatch } from 'react-redux'
 import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import {mainAddress, accessLifeTime} from './app.jsx'
+import WhiteBox from "./WhiteBox.jsx";
+import { TextField, Button } from "@mui/material";
 
 function LoginPage (){
     const dispatch = useDispatch();
-    const [username, setUsername] = React.useState('manager1');
-    const [password, setPassword] = React.useState('123ewqytr');
-    const [loading, setLoading] = React.useState('')
+    const [formData, setFormData] = React.useState({
+        username: '',
+        password: ''
+    })
+    const [formErrors, setFormErrors] = React.useState({
+        username: false,
+        password: false
+    })
+    const [loading, setLoading] = React.useState(false)
     const [error, setError] = React.useState(false)
     const navigate = useNavigate(); 
 
@@ -20,8 +28,8 @@ function LoginPage (){
         setLoading(true)
         try {
             const response = await axios.post(`${mainAddress}/api/login`,{
-                username: username,
-                password: password,
+                username: formData.username,
+                password: formData.password,
             },{
                 withCredentials: true,
             })
@@ -39,53 +47,85 @@ function LoginPage (){
                 setError('Неправильный логин или пароль')
             }
             else{
-                setError('Ошибка: ', respError.response.statusText)
+                setError('Ошибка: '+respError.response.statusText)
             }
         }
         setLoading(false)
     }
-    const handleChange = (e) =>{
-        const {id, value} = e.target
-        switch(id){
-            case 'username':{
-                setUsername(value)
-                break;
-            }
-            case 'password':{
-                setPassword(value)
-                break;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value
+        }));
+        validateField(name, value)
+    };
+    const validateField=(name, value)=>{
+        let isValid = true;
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+            isValid = false;
+        }
+        if (name==='shipping_date'){
+            const date = new Date(value)
+            if (date.toString()==='Invalid Date'|| date>Date.now() || date.getFullYear()<1900){
+                isValid = false
             }
         }
-    }
+        setFormErrors({
+            ...formErrors,
+            [name]: !isValid
+        });
+    }   
+    const isValid = () => {
+        const allFields = Object.keys(formData);
+
+        for (const field of allFields) {
+            const value = formData[field];
+            if(!value||(typeof value==='string' && value.trim()==='')) return false
+        }
+        if (Object.values(formErrors).some(error=> error===true)){
+            return false
+        }
+        
+        return true;
+    };
 
     return(
     <>
-        <div className="loginpage">
-            <form  onSubmit={handleSubmit}>
-                <div>
-                    <input
-                        type="text"
-                        id="username"
+        <div className='loginpage'>
+            <WhiteBox headerText={'Вход'}>
+                <form onSubmit={handleSubmit}>
+                    <TextField 
+                        fullWidth
+                        name={'username'}
+                        value={formData.username}
+                        error={formErrors.username}
                         placeholder='Логин'
-                        value={username}
-                        onChange={handleChange}
+                        helperText={formErrors.username&&'Введите Логин'}
                         disabled={loading}
+                        onChange={handleChange}
                     />
-                </div>
-                <div>
-                    <input
+                    <TextField 
                         type="password"
-                        id="password"
+                        fullWidth
+                        name={'password'}
+                        value={formData.password}
+                        error={formErrors.password}
+                        helperText={formErrors.password&&'Введите пароль'}
                         placeholder='Пароль'
-                        value={password}
-                        onChange={handleChange}
                         disabled={loading}
+                        onChange={handleChange}
                     />
-                </div>
-                {error?<div><p>{error}</p></div>:<></>}
-                <button  type="submit" disabled={loading}>Войти</button>
-            </form>
+                    <Button onClick={handleSubmit} disabled={!isValid()||loading}variant="contained">Войти</Button>
+                    {error&&
+                        <div className="error">
+                            <p>{error}</p>
+                        </div>}
+                </form>
+            </WhiteBox>
         </div>
+        
+        
     </>)
 }
 

@@ -226,7 +226,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             Выберите поле для поиска
                         </MenuItem>
                         {columns.map((column, index) => (
-                            <MenuItem key={index} sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
+                            <MenuItem key={index} sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}}  value={column.field}>
                                 {column.header}
                             </MenuItem>
                         ))}
@@ -258,7 +258,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                                     sx={{display:'flex', justifyContent:'center'}}
                                 >
                                     {columns.map((column, index) => (
-                                        <MenuItem key={index} sx={{display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
+                                        <MenuItem key={index} sx={{display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}}  value={column.field}>
                                             {column.header}
                                         </MenuItem>
                                     ))}
@@ -268,20 +268,17 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                                 </Button>
                             </div>
                         </div>
-                        <div className='mobilepagination'>
-                            <TablePagination
-                                rowsPerPageOptions={[5, 10, 25]}
-                                component="div"
-                                count={totalCount}
-                                rowsPerPage={rowsPerPage}
-                                page={page-1}
-                                onPageChange={handleChangePage}
-                                labelRowsPerPage={"На страницу"} 
-                                onRowsPerPageChange={handleChangeRowsPerPage}
-                                ActionsComponent={TablePaginationActions}
-                            />     
-                        </div>           
+                              
                 </Paper>
+                <div className='mobilepagination'>
+                            
+                            <TablePaginationActions
+                                count={totalCount}
+                                page={page-1}
+                                rowsPerPage={10}
+                                onPageChange={handleChangePage}
+                            />
+                        </div>     
             </div>
             {loading&&<div className='mobileloading'><CircularProgress /></div>}
             {!loading&&(<div className='items'>

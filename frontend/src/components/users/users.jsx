@@ -8,9 +8,20 @@ import UniversalTable from "../dataTable.jsx";
 function Users(){
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
-    
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const collapseWidth = 740
+    useEffect(() => {
+        
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     return(
         <div className="users">
+            {windowWidth<collapseWidth&&<h1 style={{textAlign:'center'}}>Клиенты</h1>}
             <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},

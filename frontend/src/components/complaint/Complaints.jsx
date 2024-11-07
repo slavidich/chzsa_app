@@ -20,6 +20,7 @@ function Complaints(){
     }, []);
     return (
         <div className="complaints">
+            {windowWidth<collapseWidth&&<h1 style={{textAlign:'center'}}>Рекламации</h1>}
             <UniversalTable
                 columns={[
                     {field: "id", header: "ID"},

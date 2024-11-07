@@ -26,6 +26,9 @@
                 font-size:25px;
                 white-space: nowrap;
                 margin-right: 10px;
+                @media (max-width:550px) {
+                    font-size:18px;
+                }
             }
         }
     }
