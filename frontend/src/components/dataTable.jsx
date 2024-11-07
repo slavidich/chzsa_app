@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { refreshTokenIfNeeded } from './authUtils'; // 
 import { mainAddress } from './app.jsx'; 
 import axios from "axios";
-import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,Box, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider, IconButton } from '@mui/material';
+import { TextField, Select, MenuItem, Button, TableContainer, Table, TableHead, TableRow, TableCell, TableBody,Box, TablePagination, Paper, CircularProgress, TableSortLabel, ThemeProvider, IconButton, OutlinedInput } from '@mui/material';
 import FirstPageIcon from '@mui/icons-material/FirstPage';
 import LastPageIcon from '@mui/icons-material/LastPage';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
@@ -12,6 +12,9 @@ import "../styles/dataTable.scss"
 import { EditableField, theme } from './muiUtil';
 import { useSearchParams } from 'react-router-dom';
 import WhiteBox from './WhiteBox.jsx'
+import SearchIcon from '@mui/icons-material/Search';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
+import SortIcon from '@mui/icons-material/Sort';
 
 
 export const getData = async({path, params, dispatch, setLoading, setData, setTotalPages, setTotalCount, page_size})=>{
@@ -202,13 +205,17 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                 <Paper sx={{
                     display: 'flex',
                     flexDirection: 'column'
-                }}> 
+                }}>     
+                        <div className='buttonadd'>
                         {canAdd&&
                         <Button variant="contained" color="primary" onClick={handleAddClick}>
                             Добавить
                         </Button>
                         }
+                        </div>
                         
+                        <div className='searchdiv'>
+                        <h3>Поиск</h3>
                         <Select
                             value={searchFieldInput}
                             onChange={(e) => setSearchField(e.target.value)}
@@ -218,29 +225,67 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                         <MenuItem sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}}value='' disabled>
                             Выберите поле для поиска
                         </MenuItem>
-                        {columns.map((column) => (
-                            <MenuItem sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
+                        {columns.map((column, index) => (
+                            <MenuItem key={index} sx={{minWidth:'100%',display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
                                 {column.header}
                             </MenuItem>
                         ))}
                         </Select>
-                        <div>
-                            <TextField
-                                label="Поиск"
+                        <div className='search'>
+                            <OutlinedInput
+                                
+                                placeholder="Поиск"
+                                
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
                                 disabled={searchFieldInput===''? true:false}
                             />
                             <Button variant="contained" onClick={handleSearch} disabled={searchText!=''?false:true}>
-                                Искать
+                                <SearchIcon/>
                             </Button>
                             <Button variant="contained" onClick={handleSearchCancel} disabled={searchValue!=''?false:true}>
-                                Сбросить
+                                <SearchOffIcon/>
                             </Button>
                         </div>
+                        </div>
+                        <div className="sort">
+                            <h3>Сортировка</h3>
+                            <div>
+                                <Select 
+
+                                    value={sortField}
+                                    onChange={(e)=> handleSort(e.target.value)}
+                                    sx={{display:'flex', justifyContent:'center'}}
+                                >
+                                    {columns.map((column, index) => (
+                                        <MenuItem key={index} sx={{display:'flex',textAlign:'center', justifyContent:'center', alignItems:'center'}} key={column.field} value={column.field}>
+                                            {column.header}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                <Button variant="contained" className='' onClick={()=>updateUrlParams({sortOrder:sortOrder==='asc'? 'desc':undefined})}>
+                                    <SortIcon  className={`sortsvg ${sortOrder==='asc'?'':'reverse'}`}/>
+                                </Button>
+                            </div>
+                        </div>
+                        <div className='mobilepagination'>
+                            <TablePagination
+                                rowsPerPageOptions={[5, 10, 25]}
+                                component="div"
+                                count={totalCount}
+                                rowsPerPage={rowsPerPage}
+                                page={page-1}
+                                onPageChange={handleChangePage}
+                                labelRowsPerPage={"На страницу"} 
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                                ActionsComponent={TablePaginationActions}
+                            />     
+                        </div>           
                 </Paper>
             </div>
-            <div className='items'>
+            {loading&&<div className='mobileloading'><CircularProgress /></div>}
+            {!loading&&(<div className='items'>
+                                        
                 {data.map((row, index)=>{
                     
                     return(
@@ -248,6 +293,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             {columns.map((column, index)=>{
                                 if (column.field=='id') return null
                                 return <EditableField
+                                    key={index}
                                     name={column.header}
                                     isEditing={false}
                                     label={column.header}
@@ -261,7 +307,7 @@ function UniversalTable({columns, path, params, dispatch, pageSize = 10, default
                             </div>
                         </WhiteBox>)
                 })}
-            </div>
+            </div>)}
             </>
         :
         <Paper>
